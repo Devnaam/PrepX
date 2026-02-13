@@ -1,43 +1,65 @@
 import api from './api';
-import { User } from '@/types';
+
+export interface UpdateProfileData {
+  fullName?: string;
+  bio?: string;
+  targetExams?: string[];
+  profilePicture?: string;
+}
+
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface PrivacySettings {
+  profileVisibility?: 'PUBLIC' | 'PRIVATE' | 'FOLLOWERS_ONLY';
+  showActivity?: boolean;
+  followApprovalRequired?: boolean;
+}
 
 export const userService = {
-  // Get user by username
-  getUserByUsername: async (username: string) => {
-    return api.get<any, { user: User }>(`/users/${username}`);
+  // Get current user
+  getCurrentUser: async () => {
+    const response: any = await api.get('/users/me');
+    return response.data;
   },
 
   // Update profile
-  updateProfile: async (data: Partial<User>) => {
-    return api.patch<any, { user: User }>('/users/me', data);
+  updateProfile: async (data: UpdateProfileData) => {
+    const response: any = await api.put('/users/profile', data);
+    return response.data;
   },
 
-  // Upload profile picture
-  uploadProfilePicture: async (file: File) => {
-    const formData = new FormData();
-    formData.append('profilePicture', file);
-
-    return api.post('/users/upload-profile-picture', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  },
-
-  // Delete profile picture
-  deleteProfilePicture: async () => {
-    return api.delete('/users/profile-picture');
+  // Change password
+  changePassword: async (data: ChangePasswordData) => {
+    const response: any = await api.put('/users/change-password', data);
+    return response.data;
   },
 
   // Update privacy settings
-  updatePrivacySettings: async (settings: Partial<User['privacy']>) => {
-    return api.patch('/users/privacy-settings', settings);
+  updatePrivacySettings: async (data: PrivacySettings) => {
+    const response: any = await api.put('/users/privacy', data);
+    return response.data;
   },
 
-  // Search users
-  searchUsers: async (query: string, limit = 20, skip = 0) => {
-    return api.get('/users/search', {
-      params: { q: query, limit, skip },
+  // Get user by username
+  getUserByUsername: async (username: string) => {
+    const response: any = await api.get(`/users/${username}`);
+    return response.data;
+  },
+
+  // Get user stats
+  getUserStats: async (userId: string) => {
+    const response: any = await api.get(`/users/${userId}/stats`);
+    return response.data;
+  },
+
+  // Delete account
+  deleteAccount: async (password: string) => {
+    const response: any = await api.delete('/users/account', {
+      data: { password },
     });
+    return response.data;
   },
 };

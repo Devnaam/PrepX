@@ -4,283 +4,272 @@ import ApiError from '../utils/ApiError';
 import ApiResponse from '../utils/ApiResponse';
 import asyncHandler from '../middleware/asyncHandler';
 import { AuthRequest } from '../types';
-import {
-  uploadToCloudinary,
-  deleteFromCloudinary,
-} from '../utils/cloudinary';
 
-// @desc    Get user profile by username
-// @route   GET /api/v1/users/:username
-// @access  Public (but respects privacy settings)
-export const getUserByUsername = asyncHandler(
+// @desc    Get current user profile
+// @route   GET /api/v1/users/me
+// @access  Private
+export const getCurrentUser = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    const { username } = req.params;
+    const userId = req.user?._id;
 
-    const user = await User.findOne({ username: username.toLowerCase() });
+    const user = await User.findById(userId).select('-password');
 
     if (!user) {
       throw new ApiError(404, 'User not found');
     }
 
-    // Check privacy settings
-    const currentUserId = req.user?._id.toString();
-    const targetUserId = user._id.toString();
-
-    // If viewing own profile, return everything
-    if (currentUserId === targetUserId) {
-      return res
-        .status(200)
-        .json(new ApiResponse(200, { user }, 'User retrieved successfully'));
-    }
-
-    // Apply privacy filters
-    const userResponse: any = user.toJSON();
-
-    if (user.privacy.profileVisibility === 'PRIVATE') {
-      // Only show basic info for private profiles
-      return res.status(200).json(
-        new ApiResponse(
-          200,
-          {
-            user: {
-              _id: user._id,
-              username: user.username,
-              fullName: user.fullName,
-              profilePicture: user.profilePicture,
-              privacy: { profileVisibility: 'PRIVATE' },
-            },
-          },
-          'User retrieved successfully'
-        )
-      );
-    }
-
-    // Apply individual privacy settings
-    if (!user.privacy.showActivityGraph) {
-      delete userResponse.lastActiveDate;
-    }
-    if (!user.privacy.showStreak) {
-      delete userResponse.currentStreak;
-      delete userResponse.longestStreak;
-    }
-    if (!user.privacy.showQuestionsAttempted) {
-      delete userResponse.totalQuestionsAttempted;
-      delete userResponse.totalCorrectAnswers;
-      delete userResponse.overallAccuracy;
-    }
-    if (!user.privacy.showFollowersCount) {
-      delete userResponse.followersCount;
-      delete userResponse.followingCount;
-    }
-
-    res
-      .status(200)
-      .json(new ApiResponse(200, { user: userResponse }, 'User retrieved successfully'));
+    res.status(200).json(
+      new ApiResponse(200, { user }, 'User retrieved successfully')
+    );
   }
 );
 
 // @desc    Update user profile
-// @route   PATCH /api/v1/users/me
+// @route   PUT /api/v1/users/profile
 // @access  Private
 export const updateProfile = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const userId = req.user?._id;
 
-    // Fields that can be updated
-    const allowedUpdates = ['fullName', 'bio', 'targetExam'];
-    const updates: any = {};
+    const { fullName, bio, targetExams, profilePicture } = req.body;
 
-    // Filter only allowed fields
-    Object.keys(req.body).forEach((key) => {
-      if (allowedUpdates.includes(key)) {
-        updates[key] = req.body[key];
-      }
-    });
-
-    if (Object.keys(updates).length === 0) {
-      throw new ApiError(400, 'No valid fields to update');
-    }
-
-    // Update user
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $set: updates },
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
-      throw new ApiError(404, 'User not found');
-    }
-
-    res
-      .status(200)
-      .json(new ApiResponse(200, { user }, 'Profile updated successfully'));
-  }
-);
-
-// @desc    Upload/Update profile picture
-// @route   POST /api/v1/users/upload-profile-picture
-// @access  Private
-export const uploadProfilePicture = asyncHandler(
-  async (req: AuthRequest, res: Response) => {
-    if (!req.file) {
-      throw new ApiError(400, 'Please upload an image file');
-    }
-
-    const userId = req.user?._id;
     const user = await User.findById(userId);
-
     if (!user) {
       throw new ApiError(404, 'User not found');
     }
 
-    // Delete old profile picture from Cloudinary if exists
-    if (user.profilePicture?.publicId) {
-      await deleteFromCloudinary(user.profilePicture.publicId);
+    // Validate fullName
+    if (fullName !== undefined) {
+      const trimmedName = fullName.trim();
+      if (trimmedName.length < 2) {
+        throw new ApiError(400, 'Full name must be at least 2 characters');
+      }
+      if (trimmedName.length > 100) {
+        throw new ApiError(400, 'Full name cannot exceed 100 characters');
+      }
+      user.fullName = trimmedName;
     }
 
-    // Upload new image to Cloudinary
-    const uploadResult = await uploadToCloudinary(
-      req.file.buffer,
-      'prepx/profile-pictures'
-    );
+    // Validate bio
+    if (bio !== undefined) {
+      const trimmedBio = bio.trim();
+      if (trimmedBio.length > 200) {
+        throw new ApiError(400, 'Bio cannot exceed 200 characters');
+      }
+      user.bio = trimmedBio;
+    }
 
-    // Update user with new profile picture
-    user.profilePicture = {
-      url: uploadResult.url,
-      publicId: uploadResult.publicId,
-    };
+    // Validate targetExams
+    if (targetExams !== undefined) {
+      if (!Array.isArray(targetExams)) {
+        throw new ApiError(400, 'Target exams must be an array');
+      }
+      user.targetExams = targetExams;
+    }
+
+    // Update profile picture
+    if (profilePicture !== undefined) {
+      user.profilePicture = profilePicture;
+    }
 
     await user.save();
+
+    // Return updated user (exclude password)
+    const updatedUser = await User.findById(userId).select('-password');
 
     res.status(200).json(
       new ApiResponse(
         200,
-        {
-          profilePicture: user.profilePicture,
-        },
-        'Profile picture uploaded successfully'
+        { user: updatedUser },
+        'Profile updated successfully'
       )
     );
   }
 );
 
-// @desc    Delete profile picture
-// @route   DELETE /api/v1/users/profile-picture
+// @desc    Change password
+// @route   PUT /api/v1/users/change-password
 // @access  Private
-export const deleteProfilePicture = asyncHandler(
+export const changePassword = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const userId = req.user?._id;
-    const user = await User.findById(userId);
+    const { currentPassword, newPassword } = req.body;
 
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      throw new ApiError(400, 'Current and new password are required');
+    }
+
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+      throw new ApiError(400, 'Passwords must be strings');
+    }
+
+    if (newPassword.length < 6) {
+      throw new ApiError(400, 'New password must be at least 6 characters');
+    }
+
+    if (newPassword.length > 128) {
+      throw new ApiError(400, 'New password cannot exceed 128 characters');
+    }
+
+    // Check if new password is same as current
+    if (currentPassword === newPassword) {
+      throw new ApiError(400, 'New password must be different from current password');
+    }
+
+    const user = await User.findById(userId);
     if (!user) {
       throw new ApiError(404, 'User not found');
     }
 
-    if (!user.profilePicture?.publicId) {
-      throw new ApiError(400, 'No profile picture to delete');
+    // Check current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      throw new ApiError(401, 'Current password is incorrect');
     }
 
-    // Delete from Cloudinary
-    await deleteFromCloudinary(user.profilePicture.publicId);
-
-    // Remove from user document
-    user.profilePicture = { url: '', publicId: '' };
+    // Update password
+    user.password = newPassword;
     await user.save();
 
-    res
-      .status(200)
-      .json(
-        new ApiResponse(200, {}, 'Profile picture deleted successfully')
-      );
+    res.status(200).json(
+      new ApiResponse(200, {}, 'Password changed successfully')
+    );
   }
 );
 
 // @desc    Update privacy settings
-// @route   PATCH /api/v1/users/privacy-settings
+// @route   PUT /api/v1/users/privacy
 // @access  Private
 export const updatePrivacySettings = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const userId = req.user?._id;
+    const { profileVisibility, showActivity, followApprovalRequired } =
+      req.body;
 
-    const allowedPrivacyFields = [
-      'profileVisibility',
-      'showActivityGraph',
-      'showStreak',
-      'showQuestionsAttempted',
-      'showBadges',
-      'showPostedQuestions',
-      'showFollowersCount',
-      'followApprovalRequired',
-    ];
-
-    const privacyUpdates: any = {};
-
-    Object.keys(req.body).forEach((key) => {
-      if (allowedPrivacyFields.includes(key)) {
-        privacyUpdates[`privacy.${key}`] = req.body[key];
-      }
-    });
-
-    if (Object.keys(privacyUpdates).length === 0) {
-      throw new ApiError(400, 'No valid privacy fields to update');
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, 'User not found');
     }
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $set: privacyUpdates },
-      { new: true, runValidators: true }
+    // Validate and update privacy settings
+    if (profileVisibility !== undefined) {
+      const validVisibilities = ['PUBLIC', 'PRIVATE', 'FOLLOWERS_ONLY'];
+      if (!validVisibilities.includes(profileVisibility)) {
+        throw new ApiError(400, 'Invalid profile visibility value');
+      }
+      user.privacy.profileVisibility = profileVisibility;
+    }
+
+    if (showActivity !== undefined) {
+      if (typeof showActivity !== 'boolean') {
+        throw new ApiError(400, 'showActivity must be a boolean');
+      }
+      user.privacy.showActivity = showActivity;
+    }
+
+    if (followApprovalRequired !== undefined) {
+      if (typeof followApprovalRequired !== 'boolean') {
+        throw new ApiError(400, 'followApprovalRequired must be a boolean');
+      }
+      user.privacy.followApprovalRequired = followApprovalRequired;
+    }
+
+    await user.save();
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        { privacy: user.privacy },
+        'Privacy settings updated successfully'
+      )
     );
+  }
+);
+
+// @desc    Get user by username
+// @route   GET /api/v1/users/:username
+// @access  Public
+export const getUserByUsername = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { username } = req.params;
+
+    if (!username || username.trim().length === 0) {
+      throw new ApiError(400, 'Username is required');
+    }
+
+    const user = await User.findOne({ username: username.toLowerCase() })
+      .select('-password -email')
+      .lean();
 
     if (!user) {
       throw new ApiError(404, 'User not found');
     }
 
-    res
-      .status(200)
-      .json(
-        new ApiResponse(200, { privacy: user.privacy }, 'Privacy settings updated successfully')
-      );
+    res.status(200).json(
+      new ApiResponse(200, { user }, 'User retrieved successfully')
+    );
   }
 );
 
-// @desc    Search users
-// @route   GET /api/v1/users/search
+// @desc    Get user stats
+// @route   GET /api/v1/users/:userId/stats
 // @access  Public
-export const searchUsers = asyncHandler(
+export const getUserStats = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    const { q, limit = 20, skip = 0 } = req.query;
+    const { userId } = req.params;
 
-    if (!q || typeof q !== 'string') {
-      throw new ApiError(400, 'Search query is required');
+    const user = await User.findById(userId)
+      .select(
+        'username fullName profilePicture totalQuestionsAttempted totalCorrectAnswers overallAccuracy currentStreak longestStreak followersCount followingCount postsCount'
+      )
+      .lean();
+
+    if (!user) {
+      throw new ApiError(404, 'User not found');
     }
 
-    const searchQuery = {
-      $or: [
-        { username: { $regex: q, $options: 'i' } },
-        { fullName: { $regex: q, $options: 'i' } },
-      ],
-      isBanned: false,
-    };
+    res.status(200).json(
+      new ApiResponse(200, { stats: user }, 'User stats retrieved successfully')
+    );
+  }
+);
 
-    const users = await User.find(searchQuery)
-      .select('username fullName profilePicture bio currentStreak targetExam')
-      .limit(Number(limit))
-      .skip(Number(skip))
-      .sort({ followersCount: -1 });
+// @desc    Delete user account (soft delete)
+// @route   DELETE /api/v1/users/account
+// @access  Private
+export const deleteAccount = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const userId = req.user?._id;
+    const { password } = req.body;
 
-    const total = await User.countDocuments(searchQuery);
+    if (!password) {
+      throw new ApiError(400, 'Password is required to delete account');
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    // Verify password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      throw new ApiError(401, 'Incorrect password');
+    }
+
+    // Soft delete - mark as inactive
+    user.isActive = false;
+    await user.save();
+
+    // TODO: Additional cleanup tasks:
+    // - Delete or anonymize user's posts
+    // - Remove from followers/following
+    // - Delete user attempts
+    // - Clear bookmarks
 
     res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          users,
-          total,
-          hasMore: Number(skip) + users.length < total,
-        },
-        'Users retrieved successfully'
-      )
+      new ApiResponse(200, {}, 'Account deleted successfully')
     );
   }
 );

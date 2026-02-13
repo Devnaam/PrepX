@@ -1,30 +1,26 @@
 import express from 'express';
 import {
-  getUserByUsername,
+  getCurrentUser,
   updateProfile,
-  uploadProfilePicture,
-  deleteProfilePicture,
+  changePassword,
   updatePrivacySettings,
-  searchUsers,
+  getUserByUsername,
+  getUserStats,
+  deleteAccount,
 } from '../controllers/user.controller';
-import { protect, optionalAuth } from '../middleware/auth';
-import upload from '../config/multer';
+import { protect } from '../middleware/auth';
 
 const router = express.Router();
 
-// Public routes
-router.get('/search', searchUsers);
-router.get('/:username', optionalAuth, getUserByUsername);
+// Protected routes (require authentication)
+router.get('/me', protect, getCurrentUser);
+router.put('/profile', protect, updateProfile);
+router.put('/change-password', protect, changePassword);
+router.put('/privacy', protect, updatePrivacySettings);
+router.delete('/account', protect, deleteAccount);
 
-// Protected routes
-router.patch('/me', protect, updateProfile);
-router.post(
-  '/upload-profile-picture',
-  protect,
-  upload.single('profilePicture'),
-  uploadProfilePicture
-);
-router.delete('/profile-picture', protect, deleteProfilePicture);
-router.patch('/privacy-settings', protect, updatePrivacySettings);
+// Public routes
+router.get('/:username', getUserByUsername);
+router.get('/:userId/stats', getUserStats);
 
 export default router;
