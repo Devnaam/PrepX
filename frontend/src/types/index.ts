@@ -173,3 +173,60 @@ export interface ApiError {
     details?: any;
   };
 }
+
+
+// from here we are adding abotu post andall
+// ... existing types ...
+
+// Post Types
+export interface Post {
+  _id: string;
+  author: {
+    _id: string;
+    username: string;
+    fullName: string;
+    profilePicture?: string;
+  };
+  content: string;
+  postType: 'TEXT' | 'QUESTION_SHARE' | 'ACHIEVEMENT';
+  sharedQuestion?: {
+    _id: string;
+    questionText: string;
+    subject: string;
+    topic: string;
+    difficulty: string;
+  };
+  achievement?: {
+    type: string;
+    milestone: number;
+  };
+  likesCount: number;
+  commentsCount: number;
+  isLiked?: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePostData {
+  content: string;
+  postType: 'TEXT' | 'QUESTION_SHARE' | 'ACHIEVEMENT';
+  sharedQuestion?: string;
+  achievement?: {
+    type: string;
+    milestone: number;
+  };
+}
+
+// Follow Types
+export interface FollowResponse {
+  status: 'PENDING' | 'ACCEPTED';
+}
+
+export interface FollowUser {
+  _id: string;
+  username: string;
+  fullName: string;
+  profilePicture?: string;
+  bio?: string;
+}

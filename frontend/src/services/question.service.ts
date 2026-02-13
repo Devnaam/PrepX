@@ -15,13 +15,23 @@ interface QuestionFilters {
   examTypes?: string[];
 }
 
+export interface CreateQuestionData {
+  questionText: string;
+  options: { optionText: string; isCorrect: boolean }[];
+  correctOptionIndex: number;
+  explanation: string;
+  subject: string;
+  topic: string;
+  difficulty: string;
+  examTypes: string[];
+}
+
 export const questionService = {
   // Get question feed
   getQuestionFeed: async (filters: QuestionFilters = {}) => {
     const response: any = await api.get('/questions/feed', {
       params: filters,
     });
-    // Extract data from ApiResponse wrapper
     return response.data as QuestionFeedResponse;
   },
 
@@ -35,7 +45,7 @@ export const questionService = {
   },
 
   // Create question
-  createQuestion: async (data: Partial<Question>) => {
+  createQuestion: async (data: CreateQuestionData) => {
     const response: any = await api.post('/questions', data);
     return response.data;
   },

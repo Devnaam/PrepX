@@ -15,6 +15,7 @@ import { Home } from './pages/Home';
 import { Learn } from './pages/Learn';
 import { Stats } from './pages/Stats';
 import { Profile } from './pages/Profile';
+import { Explore } from './pages/Explore';
 
 // Components
 import { BottomNav } from './components/layout/BottomNav';
@@ -102,6 +103,17 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <AppLayout>
                 <Profile />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/explore"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Explore />
               </AppLayout>
             </ProtectedRoute>
           }

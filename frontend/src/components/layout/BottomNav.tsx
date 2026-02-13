@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, BookOpen, BarChart3, User } from 'lucide-react';
+import { Home, BookOpen, Compass, BarChart3, User } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export const BottomNav: React.FC = () => {
@@ -9,6 +9,7 @@ export const BottomNav: React.FC = () => {
   const navItems = [
     { path: '/home', icon: Home, label: 'Home' },
     { path: '/learn', icon: BookOpen, label: 'Learn' },
+    { path: '/explore', icon: Compass, label: 'Explore' },
     { path: '/stats', icon: BarChart3, label: 'Stats' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];

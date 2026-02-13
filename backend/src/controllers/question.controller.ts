@@ -225,33 +225,92 @@ export const createQuestion = asyncHandler(
       examTypes,
     } = req.body;
 
+    // Validate required fields
+    if (!questionText || questionText.trim().length < 10) {
+      throw new ApiError(400, 'Question text must be at least 10 characters');
+    }
+
+    if (!explanation || explanation.trim().length < 20) {
+      throw new ApiError(400, 'Explanation must be at least 20 characters');
+    }
+
     // Validate options
     if (!options || options.length !== 4) {
       throw new ApiError(400, 'Question must have exactly 4 options');
     }
 
+    // Check if all options have text
+    const hasEmptyOption = options.some(
+      (opt: any) => !opt.optionText || opt.optionText.trim().length === 0
+    );
+    if (hasEmptyOption) {
+      throw new ApiError(400, 'All options must have text');
+    }
+
+    // Validate correct option index
+    if (
+      correctOptionIndex === undefined ||
+      correctOptionIndex < 0 ||
+      correctOptionIndex > 3
+    ) {
+      throw new ApiError(400, 'Invalid correct option index');
+    }
+
+    // Validate subject and difficulty
+    if (!subject || !difficulty) {
+      throw new ApiError(400, 'Subject and difficulty are required');
+    }
+
+    // Validate subject enum
+    const validSubjects = [
+      'MATHEMATICS',
+      'GENERAL_KNOWLEDGE',
+      'REASONING',
+      'ENGLISH',
+      'GENERAL_SCIENCE',
+      'CURRENT_AFFAIRS',
+      'COMPUTER',
+      'HISTORY',
+      'GEOGRAPHY',
+      'ECONOMICS',
+    ];
+    if (!validSubjects.includes(subject)) {
+      throw new ApiError(400, 'Invalid subject');
+    }
+
+    // Validate difficulty enum
+    const validDifficulties = ['EASY', 'MEDIUM', 'HARD'];
+    if (!validDifficulties.includes(difficulty)) {
+      throw new ApiError(400, 'Invalid difficulty level');
+    }
+
     // Create question
     const question = await Question.create({
-      questionText,
+      questionText: questionText.trim(),
       options,
       correctOptionIndex,
-      explanation,
+      explanation: explanation.trim(),
       subject,
-      topic,
+      topic: topic?.trim() || 'General',
       difficulty,
-      examTypes,
+      examTypes: examTypes || [],
       createdBy: userId,
       isAdminCreated: req.user?.isAdmin || false,
       isApproved: req.user?.isAdmin || false, // Auto-approve if admin
+      isActive: req.user?.isAdmin || false, // Active only if admin
     });
 
-    // Update user's posts count
+    // Update user's contributions count
     await User.findByIdAndUpdate(userId, {
       $inc: { postsCount: 1 },
     });
 
+    const message = req.user?.isAdmin
+      ? 'Question created and published successfully'
+      : 'Question submitted for review. You will be notified once approved.';
+
     res.status(201).json(
-      new ApiResponse(201, { question }, 'Question created successfully')
+      new ApiResponse(201, { question }, message)
     );
   }
 );
@@ -273,6 +332,204 @@ export const getQuestionById = asyncHandler(
 
     res.status(200).json(
       new ApiResponse(200, { question }, 'Question retrieved successfully')
+    );
+  }
+);
+
+// @desc    Get user's submitted questions
+// @route   GET /api/v1/questions/my-questions
+// @access  Private
+export const getMyQuestions = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const userId = req.user?._id;
+    const { limit = 20, skip = 0, status } = req.query;
+
+    const query: any = {
+      createdBy: userId,
+    };
+
+    // Filter by approval status
+    if (status === 'pending') {
+      query.isApproved = false;
+      query.isActive = false;
+    } else if (status === 'approved') {
+      query.isApproved = true;
+      query.isActive = true;
+    } else if (status === 'rejected') {
+      query.isApproved = false;
+      query.isActive = false;
+    }
+
+    const total = await Question.countDocuments(query);
+
+    const questions = await Question.find(query)
+      .select('-__v')
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip(Number(skip))
+      .lean();
+
+    const hasMore = Number(skip) + questions.length < total;
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          questions,
+          total,
+          hasMore,
+        },
+        'Your questions retrieved successfully'
+      )
+    );
+  }
+);
+
+// @desc    Update a question (admin or creator only)
+// @route   PUT /api/v1/questions/:questionId
+// @access  Private
+export const updateQuestion = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const userId = req.user?._id;
+    const { questionId } = req.params;
+
+    const question = await Question.findById(questionId);
+    if (!question) {
+      throw new ApiError(404, 'Question not found');
+    }
+
+    // Check if user is admin or creator
+    const isAdmin = req.user?.isAdmin;
+    const isCreator = question.createdBy.toString() === userId?.toString();
+
+    if (!isAdmin && !isCreator) {
+      throw new ApiError(403, 'Not authorized to update this question');
+    }
+
+    // Only allow editing if not yet approved (unless admin)
+    if (question.isApproved && !isAdmin) {
+      throw new ApiError(400, 'Cannot edit approved questions');
+    }
+
+    const {
+      questionText,
+      options,
+      correctOptionIndex,
+      explanation,
+      subject,
+      topic,
+      difficulty,
+      examTypes,
+    } = req.body;
+
+    // Update fields
+    if (questionText) question.questionText = questionText.trim();
+    if (options) question.options = options;
+    if (correctOptionIndex !== undefined)
+      question.correctOptionIndex = correctOptionIndex;
+    if (explanation) question.explanation = explanation.trim();
+    if (subject) question.subject = subject;
+    if (topic) question.topic = topic.trim();
+    if (difficulty) question.difficulty = difficulty;
+    if (examTypes) question.examTypes = examTypes;
+
+    await question.save();
+
+    res.status(200).json(
+      new ApiResponse(200, { question }, 'Question updated successfully')
+    );
+  }
+);
+
+// @desc    Delete a question (admin or creator only)
+// @route   DELETE /api/v1/questions/:questionId
+// @access  Private
+export const deleteQuestion = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const userId = req.user?._id;
+    const { questionId } = req.params;
+
+    const question = await Question.findById(questionId);
+    if (!question) {
+      throw new ApiError(404, 'Question not found');
+    }
+
+    // Check if user is admin or creator
+    const isAdmin = req.user?.isAdmin;
+    const isCreator = question.createdBy.toString() === userId?.toString();
+
+    if (!isAdmin && !isCreator) {
+      throw new ApiError(403, 'Not authorized to delete this question');
+    }
+
+    // Soft delete
+    question.isActive = false;
+    await question.save();
+
+    // Update user's posts count
+    await User.findByIdAndUpdate(question.createdBy, {
+      $inc: { postsCount: -1 },
+    });
+
+    res.status(200).json(
+      new ApiResponse(200, {}, 'Question deleted successfully')
+    );
+  }
+);
+
+// @desc    Approve a question (admin only)
+// @route   POST /api/v1/questions/:questionId/approve
+// @access  Private (Admin)
+export const approveQuestion = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { questionId } = req.params;
+
+    if (!req.user?.isAdmin) {
+      throw new ApiError(403, 'Admin access required');
+    }
+
+    const question = await Question.findById(questionId);
+    if (!question) {
+      throw new ApiError(404, 'Question not found');
+    }
+
+    question.isApproved = true;
+    question.isActive = true;
+    await question.save();
+
+    // TODO: Send notification to question creator
+
+    res.status(200).json(
+      new ApiResponse(200, { question }, 'Question approved successfully')
+    );
+  }
+);
+
+// @desc    Reject a question (admin only)
+// @route   POST /api/v1/questions/:questionId/reject
+// @access  Private (Admin)
+export const rejectQuestion = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { questionId } = req.params;
+    const { reason } = req.body;
+
+    if (!req.user?.isAdmin) {
+      throw new ApiError(403, 'Admin access required');
+    }
+
+    const question = await Question.findById(questionId);
+    if (!question) {
+      throw new ApiError(404, 'Question not found');
+    }
+
+    question.isApproved = false;
+    question.isActive = false;
+    await question.save();
+
+    // TODO: Send notification to question creator with rejection reason
+
+    res.status(200).json(
+      new ApiResponse(200, {}, 'Question rejected')
     );
   }
 );
