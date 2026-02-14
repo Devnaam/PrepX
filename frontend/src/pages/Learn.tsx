@@ -15,12 +15,15 @@ export const Learn: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
+    <div className="h-dvh flex flex-col bg-gray-50 overflow-hidden">
+      
+      {/* Top Header */}
       <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Learn</h1>
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">
+              Learn
+            </h1>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowFilters(true)}
@@ -37,9 +40,8 @@ export const Learn: React.FC = () => {
             </div>
           </div>
 
-          {/* Active Filters Display */}
           {Object.keys(filters).length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap mt-2">
               <span className="text-xs text-gray-500">Filters:</span>
               {Object.entries(filters).map(([key, value]: any) => (
                 <span
@@ -60,12 +62,24 @@ export const Learn: React.FC = () => {
         </div>
       </div>
 
-      {/* Question Feed */}
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <QuestionFeed filters={filters} />
+      {/* Reel Scroll Area (Now Safe for BottomNav) */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div
+          className="
+            h-full
+            overflow-y-auto
+            snap-y
+            snap-mandatory
+            scroll-smooth
+            touch-pan-y
+            pb-20   /* 👈 Important: Prevent hiding behind BottomNav */
+          "
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <QuestionFeed filters={filters} />
+        </div>
       </div>
 
-      {/* Modals */}
       {showFilters && (
         <FilterModal
           onClose={() => setShowFilters(false)}
@@ -75,7 +89,9 @@ export const Learn: React.FC = () => {
       )}
 
       {showCreateQuestion && (
-        <CreateQuestionForm onClose={() => setShowCreateQuestion(false)} />
+        <CreateQuestionForm
+          onClose={() => setShowCreateQuestion(false)}
+        />
       )}
     </div>
   );
