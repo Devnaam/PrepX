@@ -1,36 +1,74 @@
 import React, { useState } from 'react';
-import { Search, TrendingUp, Users, BookOpen, Hash } from 'lucide-react';
+import { Search, TrendingUp, Users, BookOpen, Trophy } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { searchService } from '@/services/search.service';
+import { leaderboardService } from '@/services/leaderboard.service';
+import { LeaderboardCard } from '@/components/leaderboard/LeaderboardCard';
 import { Loader } from '@/components/common/Loader';
 import { cn } from '@/utils/cn';
+import { useAppSelector } from '@/hooks/useRedux';
+
+type TabType = 'trending' | 'subjects' | 'users' | 'leaderboard';
+
+const SUBJECTS = [
+  { value: 'MATHEMATICS', label: 'Mathematics', icon: '🔢' },
+  { value: 'GENERAL_KNOWLEDGE', label: 'GK', icon: '🌍' },
+  { value: 'REASONING', label: 'Reasoning', icon: '🧩' },
+  { value: 'ENGLISH', label: 'English', icon: '📚' },
+  { value: 'GENERAL_SCIENCE', label: 'Science', icon: '🔬' },
+  { value: 'CURRENT_AFFAIRS', label: 'Current Affairs', icon: '📰' },
+  { value: 'COMPUTER', label: 'Computer', icon: '💻' },
+  { value: 'HISTORY', label: 'History', icon: '🏛️' },
+  { value: 'GEOGRAPHY', label: 'Geography', icon: '🗺️' },
+  { value: 'ECONOMICS', label: 'Economics', icon: '💰' },
+];
 
 export const Explore: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'trending' | 'subjects' | 'users'>(
-    'trending'
-  );
+  const { user } = useAppSelector((state) => state.auth);
+  const [activeTab, setActiveTab] = useState<TabType>('trending');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<'users' | 'questions'>('users');
+  const [leaderboardType, setLeaderboardType] = useState<'global' | 'weekly'>('global');
+  const [selectedSubject, setSelectedSubject] = useState('MATHEMATICS');
 
   // Fetch trending topics
   const { data: trendingData, isLoading: trendingLoading } = useQuery({
     queryKey: ['trending-topics'],
     queryFn: () => searchService.getTrendingTopics(20),
-    enabled: activeTab === 'trending',
+    enabled: activeTab === 'trending' && !searchQuery,
   });
 
   // Fetch subjects
   const { data: subjectsData, isLoading: subjectsLoading } = useQuery({
     queryKey: ['subjects'],
     queryFn: () => searchService.getSubjects(),
-    enabled: activeTab === 'subjects',
+    enabled: activeTab === 'subjects' && !searchQuery,
   });
 
   // Fetch suggested users
   const { data: suggestedUsersData, isLoading: suggestedUsersLoading } = useQuery({
     queryKey: ['suggested-users'],
     queryFn: () => searchService.getSuggestedUsers(20),
-    enabled: activeTab === 'users',
+    enabled: activeTab === 'users' && !searchQuery,
+  });
+
+  // Fetch leaderboard data
+  const { data: globalLeaderboard, isLoading: globalLoading } = useQuery({
+    queryKey: ['leaderboard', 'global'],
+    queryFn: () => leaderboardService.getGlobalLeaderboard(50),
+    enabled: activeTab === 'leaderboard' && leaderboardType === 'global',
+  });
+
+  const { data: weeklyLeaderboard, isLoading: weeklyLoading } = useQuery({
+    queryKey: ['leaderboard', 'weekly'],
+    queryFn: () => leaderboardService.getWeeklyLeaderboard(50),
+    enabled: activeTab === 'leaderboard' && leaderboardType === 'weekly',
+  });
+
+  const { data: subjectLeaderboard, isLoading: subjectLoading } = useQuery({
+    queryKey: ['leaderboard', 'subject', selectedSubject],
+    queryFn: () => leaderboardService.getSubjectLeaderboard(selectedSubject, 50),
+    enabled: activeTab === 'leaderboard' && leaderboardType === 'subject',
   });
 
   // Search
@@ -47,6 +85,7 @@ export const Explore: React.FC = () => {
     { id: 'trending' as const, label: 'Trending', icon: TrendingUp },
     { id: 'subjects' as const, label: 'Subjects', icon: BookOpen },
     { id: 'users' as const, label: 'Users', icon: Users },
+    { id: 'leaderboard' as const, label: 'Ranks', icon: Trophy },
   ];
 
   return (
@@ -96,7 +135,7 @@ export const Explore: React.FC = () => {
 
           {/* Tabs */}
           {!searchQuery && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -104,7 +143,7 @@ export const Explore: React.FC = () => {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      'flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors',
+                      'flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors',
                       activeTab === tab.id
                         ? 'bg-primary-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -117,6 +156,93 @@ export const Explore: React.FC = () => {
               })}
             </div>
           )}
+
+          {/* Leaderboard Type Filter */}
+          {!searchQuery && activeTab === 'leaderboard' && (
+            <div className="flex gap-2 mt-4 overflow-x-auto scrollbar-hide">
+              <button
+                onClick={() => setLeaderboardType('global')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors',
+                  leaderboardType === 'global'
+                    ? 'bg-yellow-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                )}
+              >
+                🏆 Global
+              </button>
+              <button
+                onClick={() => setLeaderboardType('weekly')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors',
+                  leaderboardType === 'weekly'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                )}
+              >
+                📅 Weekly
+              </button>
+              <button
+                onClick={() => setLeaderboardType('subject')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors',
+                  leaderboardType === 'subject'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                )}
+              >
+                📚 Subject
+              </button>
+            </div>
+          )}
+
+          {/* Subject Filter for Subject Leaderboard */}
+          {!searchQuery &&
+            activeTab === 'leaderboard' &&
+            leaderboardType === 'subject' && (
+              <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
+                {SUBJECTS.slice(0, 5).map((subject) => (
+                  <button
+                    key={subject.value}
+                    onClick={() => setSelectedSubject(subject.value)}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
+                      selectedSubject === subject.value
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    )}
+                  >
+                    <span>{subject.icon}</span>
+                    {subject.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+          {/* User Rank Display */}
+          {!searchQuery &&
+            activeTab === 'leaderboard' &&
+            leaderboardType === 'global' &&
+            globalLeaderboard?.currentUserRank && (
+              <div className="mt-4 p-3 bg-primary-50 border border-primary-200 rounded-lg">
+                <p className="text-sm text-primary-800">
+                  Your Global Rank:{' '}
+                  <span className="font-bold">#{globalLeaderboard.currentUserRank}</span>
+                </p>
+              </div>
+            )}
+
+          {!searchQuery &&
+            activeTab === 'leaderboard' &&
+            leaderboardType === 'weekly' &&
+            weeklyLeaderboard?.currentUserWeeklyRank && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800">
+                  Your Weekly Rank:{' '}
+                  <span className="font-bold">#{weeklyLeaderboard.currentUserWeeklyRank}</span>
+                </p>
+              </div>
+            )}
         </div>
       </div>
 
@@ -145,9 +271,7 @@ export const Explore: React.FC = () => {
               <div className="text-center py-20">
                 <p className="text-6xl mb-4">🔍</p>
                 <p className="text-gray-600">No results found</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Try different keywords
-                </p>
+                <p className="text-sm text-gray-500 mt-2">Try different keywords</p>
               </div>
             )}
           </div>
@@ -173,14 +297,11 @@ export const Explore: React.FC = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <Hash className="w-4 h-4 text-gray-400" />
-                          <p className="font-semibold text-gray-900">
-                            {topic.topic}
-                          </p>
+                          <p className="font-semibold text-gray-900">{topic.topic}</p>
                         </div>
                         <p className="text-xs text-gray-500">
-                          {topic.subject.replace(/_/g, ' ')} •{' '}
-                          {topic.questions} questions • {topic.attempts} attempts
+                          {topic.subject.replace(/_/g, ' ')} • {topic.questions} questions •{' '}
+                          {topic.attempts} attempts
                         </p>
                       </div>
                       <TrendingUp className="w-5 h-5 text-orange-500" />
@@ -210,9 +331,7 @@ export const Explore: React.FC = () => {
                     <h3 className="font-semibold text-gray-900 mb-2">
                       {subject.subject.replace(/_/g, ' ')}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      {subject.questionCount} questions
-                    </p>
+                    <p className="text-sm text-gray-500">{subject.questionCount} questions</p>
                     <p className="text-xs text-gray-400 mt-1">
                       {subject.totalAttempts} attempts
                     </p>
@@ -239,6 +358,75 @@ export const Explore: React.FC = () => {
             )}
           </div>
         )}
+
+        {/* Leaderboard */}
+        {!searchQuery && activeTab === 'leaderboard' && (
+          <div>
+            {(globalLoading || weeklyLoading || subjectLoading) ? (
+              <div className="flex justify-center py-8">
+                <Loader />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Global Leaderboard */}
+                {leaderboardType === 'global' &&
+                  globalLeaderboard?.users?.map((userItem: any) => (
+                    <LeaderboardCard
+                      key={userItem._id}
+                      user={userItem}
+                      rank={userItem.rank}
+                      stats={{
+                        accuracy: userItem.overallAccuracy,
+                        totalAttempts: userItem.totalQuestionsAttempted,
+                        currentStreak: userItem.currentStreak,
+                      }}
+                      isCurrentUser={userItem._id === user?._id}
+                    />
+                  ))}
+
+                {/* Weekly Leaderboard */}
+                {leaderboardType === 'weekly' &&
+                  weeklyLeaderboard?.leaderboard?.map((item: any) => (
+                    <LeaderboardCard
+                      key={item.user._id}
+                      user={item.user}
+                      rank={item.rank}
+                      stats={item.weeklyStats}
+                      isCurrentUser={item.user._id === user?._id}
+                      showWeeklyBadge
+                    />
+                  ))}
+
+                {/* Subject Leaderboard */}
+                {leaderboardType === 'subject' &&
+                  subjectLeaderboard?.leaderboard?.map((item: any) => (
+                    <LeaderboardCard
+                      key={item.user._id}
+                      user={item.user}
+                      rank={item.rank}
+                      stats={item.subjectStats}
+                      isCurrentUser={item.user._id === user?._id}
+                    />
+                  ))}
+
+                {/* Empty State */}
+                {((leaderboardType === 'global' && globalLeaderboard?.users?.length === 0) ||
+                  (leaderboardType === 'weekly' &&
+                    weeklyLeaderboard?.leaderboard?.length === 0) ||
+                  (leaderboardType === 'subject' &&
+                    subjectLeaderboard?.leaderboard?.length === 0)) && (
+                  <div className="text-center py-20">
+                    <Trophy className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+                    <p className="text-xl text-gray-600 mb-2">No rankings yet</p>
+                    <p className="text-sm text-gray-500">
+                      Be the first to make it to the leaderboard!
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -258,9 +446,7 @@ const UserCard: React.FC<{ user: any; showFollowButton?: boolean }> = ({
         <div className="flex-1">
           <p className="font-semibold text-gray-900">{user.fullName}</p>
           <p className="text-sm text-gray-500">@{user.username}</p>
-          {user.bio && (
-            <p className="text-xs text-gray-600 mt-1 line-clamp-1">{user.bio}</p>
-          )}
+          {user.bio && <p className="text-xs text-gray-600 mt-1 line-clamp-1">{user.bio}</p>}
         </div>
         {showFollowButton && (
           <button className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors">
@@ -274,9 +460,7 @@ const UserCard: React.FC<{ user: any; showFollowButton?: boolean }> = ({
           <p className="text-xs text-gray-500">Followers</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-gray-900">
-            {user.totalQuestionsAttempted}
-          </p>
+          <p className="text-lg font-bold text-gray-900">{user.totalQuestionsAttempted}</p>
           <p className="text-xs text-gray-500">Questions</p>
         </div>
         <div>

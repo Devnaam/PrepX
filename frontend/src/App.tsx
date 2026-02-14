@@ -16,6 +16,8 @@ import { Learn } from './pages/Learn';
 import { Stats } from './pages/Stats';
 import { Profile } from './pages/Profile';
 import { Explore } from './pages/Explore';
+import { Bookmarks } from './pages/Bookmarks';
+import { History } from './pages/History';
 
 // Components
 import { BottomNav } from './components/layout/BottomNav';
@@ -118,6 +120,28 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/bookmarks"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Bookmarks />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+  path="/history"
+  element={
+    <ProtectedRoute>
+      <AppLayout>
+        <History />
+      </AppLayout>
+    </ProtectedRoute>
+  }
+/>
 
         {/* Default Redirect */}
         <Route path="/" element={<Navigate to="/learn" />} />

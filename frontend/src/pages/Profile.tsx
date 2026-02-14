@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { EditProfileModal } from '@/components/profile/EditProfileModal';
 import { ChangePasswordModal } from '@/components/profile/ChangePasswordModal';
-import { LogOut, Settings, Edit, Lock, Shield } from 'lucide-react';
+import { LogOut, Edit, Lock, Shield, Bookmark, Clock } from 'lucide-react';
+
 
 export const Profile: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
@@ -118,6 +119,32 @@ export const Profile: React.FC = () => {
                 </p>
               </div>
             </button>
+
+            <button
+              onClick={() => navigate('/bookmarks')}
+              className="w-full px-4 py-4 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
+            >
+              <Bookmark className="w-5 h-5 text-gray-600" />
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Bookmarks</p>
+                <p className="text-xs text-gray-500">
+                  View your saved questions
+                </p>
+              </div>
+            </button>
+            <button
+  onClick={() => navigate('/history')}
+  className="w-full px-4 py-4 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
+>
+  <Clock className="w-5 h-5 text-gray-600" />
+  <div className="flex-1">
+    <p className="font-medium text-gray-900">Question History</p>
+    <p className="text-xs text-gray-500">
+      Review your past attempts
+    </p>
+  </div>
+</button>
+
 
             <button
               onClick={() => alert('Privacy settings coming soon!')}

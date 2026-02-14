@@ -65,6 +65,9 @@ import statsRoutes from './routes/stats.routes';
 import postRoutes from './routes/post.routes';
 import followRoutes from './routes/follow.routes';
 import searchRoutes from './routes/search.routes';
+import bookmarkRoutes from './routes/bookmark.routes';
+import historyRoutes from './routes/history.routes';
+import leaderboardRoutes from './routes/leaderboard.routes';
 
 // Use routes
 app.use('/api/v1/auth', authRoutes);
@@ -74,6 +77,9 @@ app.use('/api/v1/stats', statsRoutes);
 app.use('/api/v1/posts', postRoutes);
 app.use('/api/v1/follow', followRoutes);
 app.use('/api/v1/search', searchRoutes);
+app.use('/api/v1/bookmarks', bookmarkRoutes);
+app.use('/api/v1/history', historyRoutes);
+app.use('/api/v1/leaderboard', leaderboardRoutes);
 
 // app.use('/api/v1/users', userRoutes);
 // app.use('/api/v1/questions', questionRoutes);

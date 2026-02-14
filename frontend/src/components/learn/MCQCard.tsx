@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Question } from '@/types';
 import { cn } from '@/utils/cn';
 import { Check, X } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
+import { useToggleBookmark } from '@/hooks/useBookmarks';
 
 interface MCQCardProps {
   question: Question;
@@ -20,15 +22,28 @@ export const MCQCard: React.FC<MCQCardProps> = ({
   const [correctIndex, setCorrectIndex] = useState<number | null>(null);
   const [startTime] = useState(Date.now());
 
+  const toggleBookmark = useToggleBookmark();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  const handleBookmark = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const result = await toggleBookmark.mutateAsync(question._id);
+      setIsBookmarked(result.isBookmarked);
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
+  };
+
   const handleOptionClick = async (index: number) => {
     if (selectedOption !== null || isSubmitting) return;
 
     const timeTaken = Math.floor((Date.now() - startTime) / 1000);
     setSelectedOption(index);
-    
+
     try {
       const result = await onAnswer(index, timeTaken);
-      
+
       // Show result after getting response
       setIsCorrect(result.isCorrect);
       setCorrectIndex(result.correctOptionIndex);
@@ -78,6 +93,19 @@ export const MCQCard: React.FC<MCQCardProps> = ({
           >
             {question.difficulty}
           </span>
+          {/* In the question header, after difficulty badge */}
+          <button
+            onClick={handleBookmark}
+            disabled={toggleBookmark.isPending}
+            className={cn(
+              'ml-auto p-2 rounded-full transition-colors',
+              isBookmarked
+                ? 'text-yellow-500 bg-yellow-50'
+                : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'
+            )}
+          >
+            <Bookmark className={cn('w-5 h-5', isBookmarked && 'fill-current')} />
+          </button>
         </div>
         <h3 className="text-xl font-semibold text-gray-900 leading-relaxed">
           {question.questionText}
@@ -101,17 +129,17 @@ export const MCQCard: React.FC<MCQCardProps> = ({
                 'w-full p-4 rounded-xl text-left transition-all duration-200',
                 'border-2 flex items-center justify-between',
                 selectedOption === null &&
-                  'border-gray-200 hover:border-primary-400 hover:bg-primary-50',
+                'border-gray-200 hover:border-primary-400 hover:bg-primary-50',
                 showCorrect && 'border-green-500 bg-green-50',
                 showWrong && 'border-red-500 bg-red-50',
                 !showCorrect &&
-                  !showWrong &&
-                  isSelected &&
-                  'border-primary-500 bg-primary-50',
+                !showWrong &&
+                isSelected &&
+                'border-primary-500 bg-primary-50',
                 selectedOption !== null &&
-                  !isSelected &&
-                  !isCorrectOption &&
-                  'opacity-50'
+                !isSelected &&
+                !isCorrectOption &&
+                'opacity-50'
               )}
             >
               <span className="flex items-center gap-3">
@@ -121,8 +149,8 @@ export const MCQCard: React.FC<MCQCardProps> = ({
                     showCorrect && 'bg-green-500 text-white',
                     showWrong && 'bg-red-500 text-white',
                     !showCorrect &&
-                      !showWrong &&
-                      'bg-gray-100 text-gray-600'
+                    !showWrong &&
+                    'bg-gray-100 text-gray-600'
                   )}
                 >
                   {String.fromCharCode(65 + index)}

@@ -14,14 +14,16 @@ import { protect, adminOnly } from '../middleware/auth';
 
 const router = express.Router();
 
-// Public routes
-router.get('/:questionId', getQuestionById);
+// ⚠️ IMPORTANT: Specific routes MUST come BEFORE parameterized routes!
 
-// Protected routes
-router.get('/feed', protect, getQuestionFeed);
-router.post('/:questionId/attempt', protect, submitAnswer);
+// Protected routes (specific paths first)
+router.get('/feed', protect, getQuestionFeed);  // ✅ /feed comes first
+router.get('/my/questions', protect, getMyQuestions);  // ✅ Specific path
 router.post('/', protect, createQuestion);
-router.get('/my/questions', protect, getMyQuestions);
+
+// Parameterized routes (these should be at the bottom)
+router.get('/:questionId', getQuestionById);  // ✅ Now this won't catch /feed
+router.post('/:questionId/attempt', protect, submitAnswer);
 router.put('/:questionId', protect, updateQuestion);
 router.delete('/:questionId', protect, deleteQuestion);
 
