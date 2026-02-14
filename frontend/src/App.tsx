@@ -19,17 +19,46 @@ import { Explore } from './pages/Explore';
 import { Bookmarks } from './pages/Bookmarks';
 import { History } from './pages/History';
 
+// Admin Pages
+import { AdminLayout } from './components/admin/AdminLayout';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { QuestionManagement } from './pages/admin/QuestionManagement';
+import { UserManagement } from './pages/admin/UserManagement';
+import { Analytics } from './pages/admin/Analytics';
+import { PostsManagement } from './pages/admin/PostsManagement';
+
 // Components
 import { BottomNav } from './components/layout/BottomNav';
 import { Loader } from './components/common/Loader';
 
-// Protected Route Component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const { isAuthenticated, isLoading } = useAppSelector((state) => state.auth);
+// ==================== PROTECTED ROUTE COMPONENT ====================
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  adminOnly?: boolean;
+}
 
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  adminOnly = false,
+}) => {
+  const { isAuthenticated, isLoading, user } = useAppSelector(
+    (state) => state.auth
+  );
+
+  // DEBUG LOGS
+  console.log('🔐 ProtectedRoute Check:', {
+    path: window.location.pathname,
+    isAuthenticated,
+    isLoading,
+    username: user?.username,
+    isAdmin: user?.isAdmin,
+    adminOnly,
+    willRedirect: !isAuthenticated ? 'to /login' : (adminOnly && !user?.isAdmin) ? 'to /home' : 'allowed',
+  });
+
+  // Show loader while checking authentication
   if (isLoading) {
+    console.log('⏳ Auth loading...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader size="lg" />
@@ -37,10 +66,24 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
     );
   }
 
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    console.log('❌ Not authenticated, redirecting to /login');
+    return <Navigate to="/login" replace />;
+  }
+
+  // Redirect to home if admin access required but user is not admin
+  if (adminOnly && !user?.isAdmin) {
+    console.log('❌ Admin access required but user is not admin, redirecting to /home');
+    return <Navigate to="/home" replace />;
+  }
+
+  console.log('✅ Access granted!');
+  return <>{children}</>;
 };
 
-// Layout with Bottom Nav
+
+// ==================== APP LAYOUT WITH BOTTOM NAV ====================
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <>
@@ -50,7 +93,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-// App Content Component
+// ==================== APP CONTENT ====================
 const AppContent: React.FC = () => {
   const dispatch = useAppDispatch();
   const { token, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -64,11 +107,11 @@ const AppContent: React.FC = () => {
   return (
     <>
       <Routes>
-        {/* Public Routes */}
+        {/* ==================== PUBLIC ROUTES ==================== */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Protected Routes with Bottom Nav */}
+        {/* ==================== PROTECTED USER ROUTES ==================== */}
         <Route
           path="/home"
           element={
@@ -109,7 +152,6 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/explore"
           element={
@@ -120,7 +162,6 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/bookmarks"
           element={
@@ -131,24 +172,39 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
-  path="/history"
-  element={
-    <ProtectedRoute>
-      <AppLayout>
-        <History />
-      </AppLayout>
-    </ProtectedRoute>
-  }
-/>
+          path="/history"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <History />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Default Redirect */}
-        <Route path="/" element={<Navigate to="/learn" />} />
-        <Route path="*" element={<Navigate to="/learn" />} />
+        {/* ==================== ADMIN ROUTES ==================== */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute adminOnly>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="questions" element={<QuestionManagement />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="posts" element={<PostsManagement />} />
+        </Route>
+
+        {/* ==================== DEFAULT REDIRECTS ==================== */}
+        <Route path="/" element={<Navigate to="/learn" replace />} />
+        <Route path="*" element={<Navigate to="/learn" replace />} />
       </Routes>
 
-      {/* Toast Notifications */}
+      {/* ==================== TOAST NOTIFICATIONS ==================== */}
       <Toaster
         position="top-center"
         toastOptions={{
@@ -175,6 +231,7 @@ const AppContent: React.FC = () => {
   );
 };
 
+// ==================== MAIN APP COMPONENT ====================
 function App() {
   return (
     <Provider store={store}>

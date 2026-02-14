@@ -68,6 +68,7 @@ import searchRoutes from './routes/search.routes';
 import bookmarkRoutes from './routes/bookmark.routes';
 import historyRoutes from './routes/history.routes';
 import leaderboardRoutes from './routes/leaderboard.routes';
+import adminRoutes from './routes/admin.routes'; // NEW
 
 // Use routes
 app.use('/api/v1/auth', authRoutes);
@@ -80,6 +81,7 @@ app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/bookmarks', bookmarkRoutes);
 app.use('/api/v1/history', historyRoutes);
 app.use('/api/v1/leaderboard', leaderboardRoutes);
+app.use('/api/v1/admin', adminRoutes); // NEW
 
 // app.use('/api/v1/users', userRoutes);
 // app.use('/api/v1/questions', questionRoutes);

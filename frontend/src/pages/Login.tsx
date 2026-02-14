@@ -19,7 +19,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isLoading, error, isAuthenticated } = useAppSelector(
+  const { isLoading, error, isAuthenticated, user } = useAppSelector(
     (state) => state.auth
   );
 
@@ -33,9 +33,13 @@ export const Login: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('🚀 User authenticated, navigating to /learn', {
+        username: user?.username,
+        isAdmin: user?.isAdmin,
+      });
       navigate('/learn');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, user]);
 
   useEffect(() => {
     if (error) {
@@ -45,7 +49,18 @@ export const Login: React.FC = () => {
   }, [error, dispatch]);
 
   const onSubmit = async (data: LoginFormData) => {
-    await dispatch(login(data));
+    console.log('🔐 Attempting login...');
+    const result = await dispatch(login(data));
+    
+    if (login.fulfilled.match(result)) {
+      console.log('✅ Login dispatch successful', {
+        user: result.payload.user?.username,
+        isAdmin: result.payload.user?.isAdmin,
+      });
+      toast.success('Login successful!');
+    } else {
+      console.error('❌ Login dispatch failed');
+    }
   };
 
   return (
@@ -53,9 +68,7 @@ export const Login: React.FC = () => {
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary-600 mb-2">
-            PrepX
-          </h1>
+          <h1 className="text-4xl font-bold text-primary-600 mb-2">PrepX</h1>
           <p className="text-gray-600">Scroll. Learn. Succeed.</p>
         </div>
 
