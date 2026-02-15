@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, CallbackError } from 'mongoose';
 import { IQuestion } from '../types';
 
 const questionSchema = new Schema<IQuestion>(
@@ -25,8 +25,8 @@ const questionSchema = new Schema<IQuestion>(
     correctOptionIndex: {
       type: Number,
       required: [true, 'Correct option index is required'],
-      min: [0, 'Correct option index must be between 0 and 3'],
-      max: [3, 'Correct option index must be between 0 and 3'],
+      min: [0, 'Correct option index must be between 0-3'],
+      max: [3, 'Correct option index must be between 0-3'],
     },
     explanation: {
       type: String,
@@ -34,28 +34,31 @@ const questionSchema = new Schema<IQuestion>(
       trim: true,
       maxlength: [1000, 'Explanation cannot exceed 1000 characters'],
     },
-
-    // Classification
     subject: {
       type: String,
       required: [true, 'Subject is required'],
       enum: {
         values: [
-          'GENERAL_KNOWLEDGE',
-          'GENERAL_SCIENCE',
           'MATHEMATICS',
-          'ENGLISH',
           'REASONING',
-          'COMPUTER',
+          'ENGLISH',
+          'GENERAL_KNOWLEDGE',
           'CURRENT_AFFAIRS',
+          'SCIENCE',
+          'HISTORY',
+          'GEOGRAPHY',
+          'POLITY',
+          'ECONOMICS',
         ],
         message: '{VALUE} is not a valid subject',
       },
+      uppercase: true,
     },
     topic: {
       type: String,
       required: [true, 'Topic is required'],
       trim: true,
+      maxlength: [100, 'Topic cannot exceed 100 characters'],
     },
     difficulty: {
       type: String,
@@ -64,27 +67,25 @@ const questionSchema = new Schema<IQuestion>(
         values: ['EASY', 'MEDIUM', 'HARD'],
         message: '{VALUE} is not a valid difficulty level',
       },
+      uppercase: true,
     },
-
-    // Exam Association
     examTypes: [
       {
-         type: [String],
+        type: String,
         enum: [
           'SSC_CGL',
           'SSC_CHSL',
-          'RAILWAYSNTPC',
+          'RAILWAYS_NTPC',
           'RAILWAYS_GROUP_D',
           'IBPS_PO',
           'SBI_CLERK',
           'STATE_PSC',
           'DEFENSE',
           'TEACHING',
+          'OTHER',
         ],
       },
     ],
-
-    // Source & Quality
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -98,20 +99,16 @@ const questionSchema = new Schema<IQuestion>(
       type: Boolean,
       default: false,
     },
-
-    // Engagement Stats
     totalAttempts: {
       type: Number,
       default: 0,
-      min: [0, 'Total attempts cannot be negative'],
+      min: 0,
     },
     correctAttempts: {
       type: Number,
       default: 0,
-      min: [0, 'Correct attempts cannot be negative'],
+      min: 0,
     },
-
-    // Metadata
     isActive: {
       type: Boolean,
       default: true,
@@ -119,8 +116,6 @@ const questionSchema = new Schema<IQuestion>(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   }
 );
 
@@ -130,19 +125,20 @@ questionSchema.virtual('accuracyPercentage').get(function () {
   return Math.round((this.correctAttempts / this.totalAttempts) * 100);
 });
 
+// Validation: Ensure exactly 4 options
+questionSchema.pre('save', function (next: (err?: CallbackError) => void) {
+  if (this.options.length !== 4) {
+    return next(new Error('Question must have exactly 4 options') as CallbackError);
+  }
+  next();
+});
+
 // Indexes for performance
-questionSchema.index({ subject: 1, topic: 1, difficulty: 1 });
-questionSchema.index({ isApproved: 1, isActive: 1 });
+questionSchema.index({ subject: 1, difficulty: 1 });
 questionSchema.index({ createdBy: 1 });
+questionSchema.index({ isApproved: 1, isActive: 1 });
 questionSchema.index({ examTypes: 1 });
 questionSchema.index({ createdAt: -1 });
-
-// Validation: Exactly 4 options (FIXED)
-questionSchema.pre('validate', function () {
-  if (this.options.length !== 4) {
-    throw new Error('Question must have exactly 4 options');
-  }
-});
 
 const Question = mongoose.model<IQuestion>('Question', questionSchema);
 

@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { IUser } from '../types';
 
 const userSchema = new Schema<IUser>(
@@ -25,7 +25,7 @@ const userSchema = new Schema<IUser>(
       lowercase: true,
       trim: true,
       match: [
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
         'Please provide a valid email',
       ],
     },
@@ -33,7 +33,7 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, 'Password is required'],
       minlength: [6, 'Password must be at least 6 characters'],
-      select: false, // Don't return password in queries by default
+      select: false,
     },
     fullName: {
       type: String,
@@ -77,6 +77,10 @@ const userSchema = new Schema<IUser>(
       },
       default: null,
     },
+    targetExams: {
+      type: [String],
+      default: [],
+    },
 
     // Stats
     totalQuestionsAttempted: {
@@ -88,6 +92,12 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: 0,
       min: [0, 'Correct answers cannot be negative'],
+    },
+    overallAccuracy: {
+      type: Number,
+      default: 0,
+      min: [0, 'Accuracy cannot be negative'],
+      max: [100, 'Accuracy cannot exceed 100'],
     },
     currentStreak: {
       type: Number,
@@ -132,6 +142,10 @@ const userSchema = new Schema<IUser>(
         type: Boolean,
         default: true,
       },
+      showActivity: {
+        type: Boolean,
+        default: true,
+      },
       showStreak: {
         type: Boolean,
         default: true,
@@ -171,13 +185,19 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
     toJSON: {
       virtuals: true,
-      transform: function (doc, ret) {
-        delete ret.password;
+      transform: function (_doc, ret) {
+        if (ret.password) {
+          delete ret.password;
+        }
         return ret;
       },
     },
@@ -187,17 +207,8 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-// Virtual for overall accuracy
-userSchema.virtual('overallAccuracy').get(function () {
-  if (this.totalQuestionsAttempted === 0) return 0;
-  return Math.round(
-    (this.totalCorrectAnswers / this.totalQuestionsAttempted) * 100
-  );
-});
-
 // Hash password before saving
 userSchema.pre('save', async function () {
-  // Only hash if password is modified
   if (!this.isModified('password')) {
     return;
   }
@@ -215,25 +226,26 @@ userSchema.methods.comparePassword = async function (
 
 // Generate JWT token method
 userSchema.methods.generateAuthToken = function (): string {
-  return jwt.sign(
-    {
-      _id: this._id,
-      username: this.username,
-      email: this.email,
-      isAdmin: this.isAdmin,
-    },
-    process.env.JWT_SECRET as string,
-    {
-      expiresIn: process.env.JWT_EXPIRE || '7d',
-    }
-  );
+  const payload = {
+    _id: this._id.toString(),
+    username: this.username,
+    email: this.email,
+    isAdmin: this.isAdmin,
+  };
+
+  const secret = process.env.JWT_SECRET as string;
+  const options: SignOptions = {
+    expiresIn: process.env.JWT_EXPIRE || '7d',
+  };
+
+  return jwt.sign(payload, secret, options);
 };
 
 // Indexes for performance
 userSchema.index({ username: 1 });
 userSchema.index({ email: 1 });
 userSchema.index({ createdAt: -1 });
-userSchema.index({ currentStreak: -1 }); // For leaderboards
+userSchema.index({ currentStreak: -1 });
 
 const User = mongoose.model<IUser>('User', userSchema);
 

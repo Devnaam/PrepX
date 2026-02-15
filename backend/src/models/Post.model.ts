@@ -1,20 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
-
-export interface IPost extends Document {
-  author: mongoose.Types.ObjectId;
-  content: string;
-  postType: 'TEXT' | 'QUESTION_SHARE' | 'ACHIEVEMENT';
-  sharedQuestion?: mongoose.Types.ObjectId;
-  achievement?: {
-    type: string;
-    milestone: number;
-  };
-  likesCount: number;
-  commentsCount: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import mongoose, { Schema } from 'mongoose';
+import { IPost } from '../types';
 
 const postSchema = new Schema<IPost>(
   {
@@ -60,6 +45,10 @@ const postSchema = new Schema<IPost>(
       type: Boolean,
       default: true,
     },
+    isHidden: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -70,6 +59,7 @@ const postSchema = new Schema<IPost>(
 postSchema.index({ author: 1, createdAt: -1 });
 postSchema.index({ createdAt: -1 });
 postSchema.index({ isActive: 1 });
+postSchema.index({ isHidden: 1 });
 
 const Post = mongoose.model<IPost>('Post', postSchema);
 

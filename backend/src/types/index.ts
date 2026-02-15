@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 // Extend Express Request to include user
 export interface AuthRequest extends Request {
@@ -8,7 +8,7 @@ export interface AuthRequest extends Request {
 
 // User Interface
 export interface IUser extends Document {
-  _id: string;
+  _id: mongoose.Types.ObjectId;
   username: string;
   email: string;
   password: string;
@@ -19,8 +19,10 @@ export interface IUser extends Document {
   };
   bio?: string;
   targetExam?: string;
+  targetExams?: string[];
   totalQuestionsAttempted: number;
   totalCorrectAnswers: number;
+  overallAccuracy: number;
   currentStreak: number;
   longestStreak: number;
   lastActiveDate?: Date;
@@ -30,6 +32,7 @@ export interface IUser extends Document {
   privacy: {
     profileVisibility: 'EVERYONE' | 'FOLLOWERS' | 'PRIVATE';
     showActivityGraph: boolean;
+    showActivity?: boolean;
     showStreak: boolean;
     showQuestionsAttempted: boolean;
     showBadges: boolean;
@@ -40,6 +43,7 @@ export interface IUser extends Document {
   isVerified: boolean;
   isAdmin: boolean;
   isBanned: boolean;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -59,7 +63,7 @@ export interface IQuestion extends Document {
   topic: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   examTypes: string[];
-  createdBy: string;
+  createdBy: mongoose.Types.ObjectId;
   isAdminCreated: boolean;
   isApproved: boolean;
   totalAttempts: number;
@@ -69,8 +73,25 @@ export interface IQuestion extends Document {
   updatedAt: Date;
 }
 
+// Post Interface
+export interface IPost extends Document {
+  author: mongoose.Types.ObjectId;
+  content: string;
+  postType: 'TEXT' | 'QUESTION_SHARE' | 'ACHIEVEMENT';
+  sharedQuestion?: mongoose.Types.ObjectId;
+  achievement?: {
+    type: string;
+    milestone: number;
+  };
+  likesCount: number;
+  commentsCount: number;
+  isActive: boolean;
+  isHidden: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Export more interfaces as we build them
-// Add this to the existing file
 export interface IUserAttempt extends Document {
   userId: mongoose.Types.ObjectId;
   questionId: mongoose.Types.ObjectId;
