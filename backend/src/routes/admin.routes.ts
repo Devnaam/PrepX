@@ -1,4 +1,5 @@
 import express from 'express';
+import { uploadFile } from '../middleware/upload';
 import {
   // Dashboard
   getDashboardOverview,
@@ -20,6 +21,18 @@ import {
   getAllPosts,
   toggleHidePost,
   deletePost,
+  createQuestion,
+  updateQuestion,
+  getQuestionById,
+
+  getAllBadges,
+  createBadge,
+  updateBadge,
+  deleteBadge,
+  awardBadgeToUser,
+
+  bulkUploadQuestions,
+  downloadTemplate,
 } from '../controllers/admin.controller';
 import { protect, adminOnly } from '../middleware/auth';
 
@@ -33,11 +46,17 @@ router.use(adminOnly);
 router.get('/dashboard', getDashboardOverview);
 
 // ==================== QUESTION MANAGEMENT ====================
-router.get('/questions', getAllQuestions);
+// IMPORTANT: Specific routes MUST come before dynamic :id routes
 router.get('/questions/analytics', getQuestionAnalytics);
-router.patch('/questions/:id/approve', approveQuestion);
-router.delete('/questions/:id', deleteQuestion);
+router.get('/questions/template', downloadTemplate); // ✅ MOVED UP
+router.post('/questions/bulk-upload', uploadFile.single('file'), bulkUploadQuestions); // ✅ MOVED UP
 router.post('/questions/bulk-approve', bulkApproveQuestions);
+router.post('/questions/create', createQuestion);
+router.get('/questions', getAllQuestions);
+router.get('/questions/:id', getQuestionById); // ✅ Now comes AFTER specific routes
+router.patch('/questions/:id/approve', approveQuestion);
+router.patch('/questions/:id', updateQuestion);
+router.delete('/questions/:id', deleteQuestion);
 
 // ==================== USER MANAGEMENT ====================
 router.get('/users', getAllUsers);
@@ -53,5 +72,12 @@ router.get('/analytics/engagement', getEngagementAnalytics);
 router.get('/posts', getAllPosts);
 router.patch('/posts/:id/hide', toggleHidePost);
 router.delete('/posts/:id', deletePost);
+
+// ==================== BADGE MANAGEMENT ====================
+router.get('/badges', getAllBadges);
+router.post('/badges', createBadge);
+router.patch('/badges/:id', updateBadge);
+router.delete('/badges/:id', deleteBadge);
+router.post('/badges/award', awardBadgeToUser);
 
 export default router;

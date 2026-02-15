@@ -69,11 +69,11 @@ const questionSchema = new Schema<IQuestion>(
     // Exam Association
     examTypes: [
       {
-        type: String,
+         type: [String],
         enum: [
           'SSC_CGL',
           'SSC_CHSL',
-          'RAILWAYS_NTPC',
+          'RAILWAYSNTPC',
           'RAILWAYS_GROUP_D',
           'IBPS_PO',
           'SBI_CLERK',

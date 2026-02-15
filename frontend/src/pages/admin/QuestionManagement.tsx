@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '@/services/admin.service';
+import { Upload } from 'lucide-react';
+
 import { Loader } from '@/components/common/Loader';
 import {
   Check,
@@ -13,6 +15,9 @@ import {
 import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
+
 
 export const QuestionManagement: React.FC = () => {
   const queryClient = useQueryClient();
@@ -110,7 +115,35 @@ export const QuestionManagement: React.FC = () => {
             Approve, edit, or delete questions
           </p>
         </div>
+        <Link to="/admin/questions/create" className="btn-primary">
+          <Plus className="w-5 h-5" />
+          Create Question
+        </Link>
       </div>
+
+      // In the header section, update to include both buttons:
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Question Management
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Approve, edit, or delete questions
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <Link to="/admin/questions/bulk-upload" className="btn-secondary">
+            <Upload className="w-5 h-5" />
+            Bulk Upload
+          </Link>
+          <Link to="/admin/questions/create" className="btn-primary">
+            <Plus className="w-5 h-5" />
+            Create Question
+          </Link>
+        </div>
+      </div>
+
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -247,11 +280,11 @@ export const QuestionManagement: React.FC = () => {
                       className={cn(
                         'px-3 py-1 text-xs font-medium rounded-full',
                         question.difficulty === 'EASY' &&
-                          'bg-green-100 text-green-800',
+                        'bg-green-100 text-green-800',
                         question.difficulty === 'MEDIUM' &&
-                          'bg-yellow-100 text-yellow-800',
+                        'bg-yellow-100 text-yellow-800',
                         question.difficulty === 'HARD' &&
-                          'bg-red-100 text-red-800'
+                        'bg-red-100 text-red-800'
                       )}
                     >
                       {question.difficulty}

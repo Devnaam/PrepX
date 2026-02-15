@@ -106,4 +106,60 @@ export const adminService = {
     const response: any = await api.delete(`/admin/posts/${postId}`);
     return response.data;
   },
+
+  // Add to existing adminService object
+
+createQuestion: async (data: any) => {
+  const response: any = await api.post('/admin/questions/create', data);
+  return response.data;
+},
+
+updateQuestion: async (questionId: string, data: any) => {
+  const response: any = await api.patch(`/admin/questions/${questionId}`, data);
+  return response.data;
+},
+
+getQuestionById: async (questionId: string) => {
+  const response: any = await api.get(`/admin/questions/${questionId}`);
+  return response.data;
+},
+
+// Add to adminService object
+
+// ==================== BADGE MANAGEMENT ====================
+getAllBadges: async () => {
+  const response: any = await api.get('/admin/badges');
+  return response.data;
+},
+
+createBadge: async (data: any) => {
+  const response: any = await api.post('/admin/badges', data);
+  return response.data;
+},
+
+updateBadge: async (badgeId: string, data: any) => {
+  const response: any = await api.patch(`/admin/badges/${badgeId}`, data);
+  return response.data;
+},
+
+deleteBadge: async (badgeId: string) => {
+  const response: any = await api.delete(`/admin/badges/${badgeId}`);
+  return response.data;
+},
+
+awardBadge: async (userId: string, badgeId: string) => {
+  const response: any = await api.post('/admin/badges/award', { userId, badgeId });
+  return response.data;
+},
+
+bulkUploadQuestions: async (formData: FormData) => {
+  const response: any = await api.post('/admin/questions/bulk-upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+},
+
+
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -6,6 +6,7 @@ import {
   Users,
   BarChart3,
   FileText,
+  Award,
   LogOut,
   Menu,
   X,
@@ -13,7 +14,6 @@ import {
 import { cn } from '@/utils/cn';
 import { useAppDispatch } from '@/hooks/useRedux';
 import { logout } from '@/features/auth/authSlice';
-import { useState } from 'react';
 
 const sidebarItems = [
   {
@@ -40,6 +40,11 @@ const sidebarItems = [
     name: 'Posts',
     path: '/admin/posts',
     icon: FileText,
+  },
+  {
+    name: 'Badges',
+    path: '/admin/badges',
+    icon: Award,
   },
 ];
 

@@ -26,6 +26,9 @@ import { QuestionManagement } from './pages/admin/QuestionManagement';
 import { UserManagement } from './pages/admin/UserManagement';
 import { Analytics } from './pages/admin/Analytics';
 import { PostsManagement } from './pages/admin/PostsManagement';
+import { CreateQuestion } from './pages/admin/CreateQuestion';
+import { BadgeManagement } from './pages/admin/BadgeManagement';
+import { BulkUpload } from './pages/admin/BulkUpload';
 
 // Components
 import { BottomNav } from './components/layout/BottomNav';
@@ -194,9 +197,12 @@ const AppContent: React.FC = () => {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="questions" element={<QuestionManagement />} />
+          <Route path="questions/create" element={<CreateQuestion />} /> {/* NEW */}
           <Route path="users" element={<UserManagement />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="posts" element={<PostsManagement />} />
+          <Route path="badges" element={<BadgeManagement />} />
+          <Route path="questions/bulk-upload" element={<BulkUpload />} />
         </Route>
 
         {/* ==================== DEFAULT REDIRECTS ==================== */}

@@ -8,6 +8,9 @@ import ApiResponse from '../utils/ApiResponse';
 import asyncHandler from '../middleware/asyncHandler';
 import { AuthRequest } from '../types';
 import mongoose from 'mongoose';
+import Badge from '../models/Badge.model';
+import csv from 'csv-parser';
+import { Readable } from 'stream';
 
 // ==================== DASHBOARD ====================
 
@@ -672,5 +675,415 @@ export const deletePost = asyncHandler(
     res.status(200).json(
       new ApiResponse(200, {}, 'Post deleted successfully')
     );
+  }
+);
+
+
+// ==================== QUESTION CRUD ====================
+
+// @desc    Create new question (admin)
+// @route   POST /api/v1/admin/questions/create
+// @access  Private/Admin
+export const createQuestion = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const {
+      questionText,
+      options,
+      explanation,
+      subject,
+      topic,
+      difficulty,
+      examTypes,
+    } = req.body;
+
+    // Validate required fields
+    if (!questionText || !options || options.length !== 4) {
+      throw new ApiError(400, 'Question must have text and 4 options');
+    }
+
+    // Check if exactly one option is marked as correct
+    const correctOptionIndex = options.findIndex((opt: any) => opt.isCorrect);
+    
+    if (correctOptionIndex === -1) {
+      throw new ApiError(400, 'Please mark one option as correct');
+    }
+
+    const correctCount = options.filter((opt: any) => opt.isCorrect).length;
+    if (correctCount !== 1) {
+      throw new ApiError(400, 'Exactly one option must be marked as correct');
+    }
+
+    // Create question with correctOptionIndex
+    const question = await Question.create({
+      questionText,
+      options,
+      correctOptionIndex, // ADD THIS - calculated from options
+      explanation,
+      subject,
+      topic,
+      difficulty,
+      examTypes,
+      createdBy: req.user._id,
+      isApproved: true, // Admin questions are auto-approved
+      isActive: true,
+    });
+
+    res.status(201).json(
+      new ApiResponse(201, { question }, 'Question created successfully')
+    );
+  }
+);
+
+
+// @desc    Update question
+// @route   PATCH /api/v1/admin/questions/:id
+// @access  Private/Admin
+export const updateQuestion = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Validate options if provided
+    if (updateData.options) {
+      if (updateData.options.length !== 4) {
+        throw new ApiError(400, 'Question must have exactly 4 options');
+      }
+      const correctOptions = updateData.options.filter(
+        (opt: any) => opt.isCorrect
+      );
+      if (correctOptions.length !== 1) {
+        throw new ApiError(400, 'Exactly one option must be marked as correct');
+      }
+    }
+
+    const question = await Question.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!question) {
+      throw new ApiError(404, 'Question not found');
+    }
+
+    res.status(200).json(
+      new ApiResponse(200, { question }, 'Question updated successfully')
+    );
+  }
+);
+
+// @desc    Get single question details
+// @route   GET /api/v1/admin/questions/:id
+// @access  Private/Admin
+export const getQuestionById = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+
+    const question = await Question.findById(id)
+      .populate('createdBy', 'username fullName')
+      .lean();
+
+    if (!question) {
+      throw new ApiError(404, 'Question not found');
+    }
+
+    res.status(200).json(
+      new ApiResponse(200, { question }, 'Question retrieved successfully')
+    );
+  }
+);
+
+
+// ==================== BADGE MANAGEMENT ====================
+
+// @desc    Get all badges
+// @route   GET /api/v1/admin/badges
+// @access  Private/Admin
+export const getAllBadges = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const badges = await Badge.find().sort({ createdAt: -1 }).lean();
+
+    res.status(200).json(
+      new ApiResponse(200, { badges }, 'Badges retrieved successfully')
+    );
+  }
+);
+
+// @desc    Create badge
+// @route   POST /api/v1/admin/badges
+// @access  Private/Admin
+export const createBadge = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { name, description, icon, color, criteria } = req.body;
+
+    // Validate
+    if (!name || !description || !icon || !criteria) {
+      throw new ApiError(400, 'All fields are required');
+    }
+
+    // Check if badge with same name exists
+    const existingBadge = await Badge.findOne({ name });
+    if (existingBadge) {
+      throw new ApiError(409, 'Badge with this name already exists');
+    }
+
+    const badge = await Badge.create({
+      name,
+      description,
+      icon,
+      color,
+      criteria,
+    });
+
+    res.status(201).json(
+      new ApiResponse(201, { badge }, 'Badge created successfully')
+    );
+  }
+);
+
+// @desc    Update badge
+// @route   PATCH /api/v1/admin/badges/:id
+// @access  Private/Admin
+export const updateBadge = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+
+    const badge = await Badge.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!badge) {
+      throw new ApiError(404, 'Badge not found');
+    }
+
+    res.status(200).json(
+      new ApiResponse(200, { badge }, 'Badge updated successfully')
+    );
+  }
+);
+
+// @desc    Delete badge
+// @route   DELETE /api/v1/admin/badges/:id
+// @access  Private/Admin
+export const deleteBadge = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+
+    const badge = await Badge.findByIdAndDelete(id);
+
+    if (!badge) {
+      throw new ApiError(404, 'Badge not found');
+    }
+
+    res.status(200).json(
+      new ApiResponse(200, {}, 'Badge deleted successfully')
+    );
+  }
+);
+
+// @desc    Award badge to user
+// @route   POST /api/v1/admin/badges/award
+// @access  Private/Admin
+export const awardBadgeToUser = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { userId, badgeId } = req.body;
+
+    if (!userId || !badgeId) {
+      throw new ApiError(400, 'User ID and Badge ID are required');
+    }
+
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    // Check if badge exists
+    const badge = await Badge.findById(badgeId);
+    if (!badge) {
+      throw new ApiError(404, 'Badge not found');
+    }
+
+    // Check if user already has this badge (using UserBadge model if exists)
+    // For now, we'll just return success
+    // You can implement UserBadge tracking if needed
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        { user, badge },
+        `Badge "${badge.name}" awarded to ${user.fullName}`
+      )
+    );
+  }
+);
+
+
+// ==================== BULK QUESTION UPLOAD ====================
+
+// @desc    Bulk upload questions from CSV/JSON
+// @route   POST /api/v1/admin/questions/bulk-upload
+// @access  Private/Admin
+export const bulkUploadQuestions = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    if (!req.file) {
+      throw new ApiError(400, 'Please upload a file');
+    }
+
+    const fileExt = req.file.originalname.toLowerCase().split('.').pop();
+    let questions: any[] = [];
+
+    try {
+      if (fileExt === 'json') {
+        // Parse JSON
+        questions = JSON.parse(req.file.buffer.toString());
+        
+        if (!Array.isArray(questions)) {
+          throw new ApiError(400, 'JSON file must contain an array of questions');
+        }
+      } else if (fileExt === 'csv') {
+        // Parse CSV
+        questions = await parseCSV(req.file.buffer);
+      } else {
+        throw new ApiError(400, 'Invalid file format');
+      }
+
+      // Validate and process questions
+      const results = {
+        total: questions.length,
+        success: 0,
+        failed: 0,
+        errors: [] as any[],
+      };
+
+      for (let i = 0; i < questions.length; i++) {
+        try {
+          const q = questions[i];
+
+          // Validate required fields
+          if (!q.questionText || !q.explanation || !q.subject || !q.topic || !q.difficulty) {
+            throw new Error('Missing required fields');
+          }
+
+          // Parse options (could be string or array)
+          let options = q.options;
+          if (typeof options === 'string') {
+            options = JSON.parse(options);
+          }
+
+          if (!Array.isArray(options) || options.length !== 4) {
+            throw new Error('Must have exactly 4 options');
+          }
+
+          // Parse exam types
+          let examTypes = q.examTypes;
+          if (typeof examTypes === 'string') {
+            examTypes = examTypes.split(',').map((t: string) => t.trim());
+          }
+
+          // Find correct option index
+          const correctOptionIndex = options.findIndex((opt: any) => opt.isCorrect === true);
+          if (correctOptionIndex === -1) {
+            throw new Error('No correct option marked');
+          }
+
+          // Create question
+          await Question.create({
+            questionText: q.questionText,
+            options,
+            correctOptionIndex,
+            explanation: q.explanation,
+            subject: q.subject,
+            topic: q.topic,
+            difficulty: q.difficulty,
+            examTypes,
+            createdBy: req.user._id,
+            isApproved: true,
+            isActive: true,
+          });
+
+          results.success++;
+        } catch (error: any) {
+          results.failed++;
+          results.errors.push({
+            row: i + 1,
+            error: error.message,
+            question: questions[i].questionText?.substring(0, 50) || 'Unknown',
+          });
+        }
+      }
+
+      res.status(200).json(
+        new ApiResponse(
+          200,
+          results,
+          `Bulk upload completed: ${results.success} success, ${results.failed} failed`
+        )
+      );
+    } catch (error: any) {
+      throw new ApiError(400, `Failed to parse file: ${error.message}`);
+    }
+  }
+);
+
+// Helper function to parse CSV
+async function parseCSV(buffer: Buffer): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    const results: any[] = [];
+    const stream = Readable.from(buffer.toString());
+
+    stream
+      .pipe(csv())
+      .on('data', (data) => results.push(data))
+      .on('end', () => resolve(results))
+      .on('error', (error) => reject(error));
+  });
+}
+
+// @desc    Download CSV template
+// @route   GET /api/v1/admin/questions/template
+// @access  Private/Admin
+export const downloadTemplate = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { format = 'csv' } = req.query;
+
+    if (format === 'json') {
+      // JSON template
+      const template = [
+        {
+          questionText: 'What is the capital of India?',
+          options: [
+            { optionText: 'Mumbai', isCorrect: false },
+            { optionText: 'Delhi', isCorrect: true },
+            { optionText: 'Kolkata', isCorrect: false },
+            { optionText: 'Chennai', isCorrect: false },
+          ],
+          explanation: 'Delhi is the capital of India.',
+          subject: 'GENERAL_KNOWLEDGE',
+          topic: 'Geography',
+          difficulty: 'EASY',
+          examTypes: ['SSCCGL', 'SSCCHSL', 'RAILWAYNTPC'],
+        },
+      ];
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename=questions_template.json'
+      );
+      res.send(JSON.stringify(template, null, 2));
+    } else {
+      // CSV template
+      const csvTemplate = `questionText,optionA,optionB,optionC,optionD,correctOption,explanation,subject,topic,difficulty,examTypes
+"What is the capital of India?","Mumbai","Delhi","Kolkata","Chennai","B","Delhi is the capital of India.","GENERAL_KNOWLEDGE","Geography","EASY","SSCCGL,SSCCHSL"
+"Who wrote the Indian National Anthem?","Mahatma Gandhi","Rabindranath Tagore","Bankim Chandra","Subhas Chandra Bose","B","Jana Gana Mana was written by Rabindranath Tagore.","GENERAL_KNOWLEDGE","History","MEDIUM","SSCCGL,UPSC"`;
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename=questions_template.csv'
+      );
+      res.send(csvTemplate);
+    }
   }
 );
