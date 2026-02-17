@@ -1,8 +1,3 @@
-***
-
-# **README.md**
-
-```markdown
 # prepX - Social Learning Platform for Government Exam Aspirants
 
 <div align="center">
@@ -54,7 +49,9 @@
 - 👥 **Social Network** - Follow friends, share achievements
 
 ### Target Audience
+
 Government exam aspirants in India preparing for:
+
 - SSC (CGL, CHSL)
 - Railways (NTPC, Group D)
 - Banking (IBPS, SBI)
@@ -68,6 +65,7 @@ Government exam aspirants in India preparing for:
 ### Core Features (MVP - Phase 1) ✅
 
 #### 🎓 Learn Tab - MCQ Practice Feed
+
 - Infinite scroll MCQ feed with TikTok-style UX
 - Instant feedback with explanations
 - Smart filtering by subject, topic, difficulty
@@ -75,6 +73,7 @@ Government exam aspirants in India preparing for:
 - Bulk question upload (CSV/JSON)
 
 #### 📊 Stats & Analytics
+
 - Today's performance summary
 - Daily/Weekly/Monthly statistics
 - Subject-wise breakdown
@@ -82,6 +81,7 @@ Government exam aspirants in India preparing for:
 - Progress tracking
 
 #### 👤 Profile & Gamification
+
 - User profiles with customization
 - Streak tracking (current & longest)
 - Badge system with auto-awarding
@@ -89,12 +89,14 @@ Government exam aspirants in India preparing for:
 - Privacy controls
 
 #### 🔐 Authentication & Security
+
 - JWT-based authentication
 - Secure password hashing (bcrypt)
 - Role-based access control (User/Admin)
 - Rate limiting & security headers
 
 #### 👨‍💼 Admin Panel
+
 - Dashboard with key metrics
 - Question management (CRUD, approve, analytics)
 - User management (ban/unban)
@@ -106,6 +108,7 @@ Government exam aspirants in India preparing for:
 ### Upcoming Features (Phase 2-4) 🚀
 
 #### 🏠 Home Tab - Community Feed
+
 - Text posts & discussions
 - User-generated questions
 - Job postings
@@ -114,6 +117,7 @@ Government exam aspirants in India preparing for:
 - Hashtag support
 
 #### 🔍 Explore Tab - Social Discovery
+
 - User search & suggestions
 - Follow/Unfollow system
 - Friend requests
@@ -121,12 +125,14 @@ Government exam aspirants in India preparing for:
 - Trending hashtags & topics
 
 #### 🔔 Notifications
+
 - Real-time push notifications
 - Badge achievement alerts
 - Social interactions (likes, comments, follows)
 - Daily reminders
 
 #### 💰 Monetization (Phase 4)
+
 - Premium features
 - Ad integration
 - Payment gateway (Razorpay)
@@ -136,6 +142,7 @@ Government exam aspirants in India preparing for:
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Framework:** React 18 with TypeScript
 - **Styling:** Tailwind CSS 3
 - **State Management:** Redux Toolkit, React Query
@@ -146,6 +153,7 @@ Government exam aspirants in India preparing for:
 - **Build Tool:** Vite
 
 ### Backend
+
 - **Runtime:** Node.js 20 LTS
 - **Framework:** Express.js 4.x
 - **Language:** TypeScript
@@ -156,12 +164,14 @@ Government exam aspirants in India preparing for:
 - **Logging:** Winston, Morgan
 
 ### Database & Storage
+
 - **Database:** MongoDB Atlas v6
 - **ODM:** Mongoose 8.x
 - **Media Storage:** Cloudinary
 - **Caching:** Redis (future)
 
 ### DevOps & Tools
+
 - **Version Control:** Git & GitHub
 - **Frontend Hosting:** Vercel
 - **Backend Hosting:** Render
@@ -209,6 +219,7 @@ npm install
 Create `.env` files in both `backend` and `frontend` directories.
 
 **Backend `.env`:**
+
 ```env
 NODE_ENV=development
 PORT=5000
@@ -226,6 +237,7 @@ FRONTEND_URL=http://localhost:5173
 ```
 
 **Frontend `.env`:**
+
 ```env
 VITE_API_URL=http://localhost:5000/api/v1
 ```
@@ -233,6 +245,7 @@ VITE_API_URL=http://localhost:5000/api/v1
 #### 5. Run the Application
 
 **Backend (Terminal 1):**
+
 ```bash
 cd backend
 npm run dev
@@ -240,6 +253,7 @@ npm run dev
 ```
 
 **Frontend (Terminal 2):**
+
 ```bash
 cd frontend
 npm run dev
@@ -253,9 +267,9 @@ Register a user via the UI, then manually update in MongoDB:
 ```javascript
 // MongoDB Atlas or Compass
 db.users.updateOne(
-  { email: "your-email@example.com" },
-  { $set: { isAdmin: true } }
-)
+	{ email: "your-email@example.com" },
+	{ $set: { isAdmin: true } },
+);
 ```
 
 Access admin panel at: `http://localhost:5173/admin`
@@ -266,23 +280,23 @@ Access admin panel at: `http://localhost:5173/admin`
 
 ### Backend Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NODE_ENV` | Environment (development/production) | ✅ |
-| `PORT` | Server port | ✅ |
-| `MONGODB_URI` | MongoDB connection string | ✅ |
-| `JWT_SECRET` | Secret key for JWT tokens (min 32 chars) | ✅ |
-| `JWT_EXPIRE` | JWT expiration time (e.g., 7d) | ✅ |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | ✅ |
-| `CLOUDINARY_API_KEY` | Cloudinary API key | ✅ |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret | ✅ |
-| `FRONTEND_URL` | Frontend URL for CORS | ✅ |
+| Variable                | Description                              | Required |
+| ----------------------- | ---------------------------------------- | -------- |
+| `NODE_ENV`              | Environment (development/production)     | ✅       |
+| `PORT`                  | Server port                              | ✅       |
+| `MONGODB_URI`           | MongoDB connection string                | ✅       |
+| `JWT_SECRET`            | Secret key for JWT tokens (min 32 chars) | ✅       |
+| `JWT_EXPIRE`            | JWT expiration time (e.g., 7d)           | ✅       |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name                    | ✅       |
+| `CLOUDINARY_API_KEY`    | Cloudinary API key                       | ✅       |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret                    | ✅       |
+| `FRONTEND_URL`          | Frontend URL for CORS                    | ✅       |
 
 ### Frontend Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `VITE_API_URL` | Backend API base URL | ✅ |
+| Variable       | Description          | Required |
+| -------------- | -------------------- | -------- |
+| `VITE_API_URL` | Backend API base URL | ✅       |
 
 ---
 
@@ -312,6 +326,7 @@ Access admin panel at: `http://localhost:5173/admin`
 ## 📚 API Documentation
 
 ### Base URL
+
 ```
 Development: http://localhost:5000/api/v1
 Production:  https://your-backend.onrender.com/api/v1
@@ -320,6 +335,7 @@ Production:  https://your-backend.onrender.com/api/v1
 ### Authentication Endpoints
 
 #### Register User
+
 ```http
 POST /auth/register
 Content-Type: application/json
@@ -333,6 +349,7 @@ Content-Type: application/json
 ```
 
 #### Login
+
 ```http
 POST /auth/login
 Content-Type: application/json
@@ -344,6 +361,7 @@ Content-Type: application/json
 ```
 
 #### Get Current User
+
 ```http
 GET /auth/me
 Authorization: Bearer {token}
@@ -352,12 +370,14 @@ Authorization: Bearer {token}
 ### Question Endpoints
 
 #### Get MCQ Feed
+
 ```http
 GET /questions/feed?limit=20&skip=0&subject=GENERAL_KNOWLEDGE&difficulty=EASY
 Authorization: Bearer {token}
 ```
 
 #### Submit Answer
+
 ```http
 POST /questions/:id/attempt
 Authorization: Bearer {token}
@@ -374,12 +394,14 @@ Content-Type: application/json
 All admin endpoints require admin privileges.
 
 #### Get Dashboard Stats
+
 ```http
 GET /admin/dashboard
 Authorization: Bearer {admin_token}
 ```
 
 #### Bulk Upload Questions
+
 ```http
 POST /admin/questions/bulk-upload
 Authorization: Bearer {admin_token}
@@ -389,6 +411,7 @@ file: questions.csv
 ```
 
 #### Download Template
+
 ```http
 GET /admin/questions/template?format=csv
 Authorization: Bearer {admin_token}
@@ -496,6 +519,7 @@ prepx/
 ## 🗺️ Roadmap
 
 ### ✅ Phase 1: MVP (Completed)
+
 - [x] Authentication system
 - [x] MCQ feed with infinite scroll
 - [x] Question filtering and answering
@@ -506,6 +530,7 @@ prepx/
 - [x] Bulk question upload
 
 ### 🚧 Phase 2: Social Features (In Progress)
+
 - [ ] Home feed - community posts
 - [ ] Follow/Unfollow system
 - [ ] Friend requests
@@ -515,6 +540,7 @@ prepx/
 - [ ] Trending hashtags
 
 ### 📅 Phase 3: Advanced Features
+
 - [ ] GitHub-style activity graph
 - [ ] Enhanced analytics dashboard
 - [ ] PWA offline support
@@ -524,6 +550,7 @@ prepx/
 - [ ] Multi-language support (Hindi)
 
 ### 💰 Phase 4: Monetization & Scale
+
 - [ ] Premium features
 - [ ] Payment gateway integration
 - [ ] Ad integration
@@ -562,7 +589,7 @@ Contributions are what make the open-source community amazing! Any contributions
 
 ---
 
-## 🐛 Issues
+## Issues
 
 Found a bug or have a feature request? [Open an issue](https://github.com/yourusername/prepx/issues)
 
@@ -607,7 +634,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 </div>
 ```
 
-***
+---
 
 ## **Additional Files to Create:**
 
@@ -639,7 +666,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-***
+---
 
 ### **2. .gitignore** (Project Root)
 
@@ -685,7 +712,7 @@ coverage/
 .cache/
 ```
 
-***
+---
 
 ### **3. CONTRIBUTING.md** (Optional)
 
@@ -713,6 +740,7 @@ Thank you for considering contributing to prepX! 🎉
 ## Reporting Bugs
 
 Open an issue with:
+
 - Bug description
 - Steps to reproduce
 - Expected behavior
@@ -721,6 +749,7 @@ Open an issue with:
 ## Feature Requests
 
 Open an issue with:
+
 - Feature description
 - Use case
 - Why it would be useful
@@ -728,7 +757,7 @@ Open an issue with:
 Thank you! ❤️
 ```
 
-***
+---
 
 ## **Screenshots Section (Update README)**
 
@@ -738,17 +767,20 @@ Add this section after Features:
 ## 📸 Screenshots
 
 ### Learn Tab - MCQ Feed
+
 ![Learn Tab](https://via.placeholder.com/800x400?text=Learn+Tab+Screenshot)
 
 ### Stats Dashboard
+
 ![Stats](https://via.placeholder.com/800x400?text=Stats+Dashboard)
 
 ### Admin Panel
+
 ![Admin](https://via.placeholder.com/800x400?text=Admin+Panel)
 
 ### Profile Page
+
 ![Profile](https://via.placeholder.com/800x400?text=Profile+Page)
 ```
 
-***
-
+---
