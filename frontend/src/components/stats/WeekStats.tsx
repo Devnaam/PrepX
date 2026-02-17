@@ -20,95 +20,100 @@ export const WeekStats: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader />
+      <div className="flex items-center justify-center py-12">
+        <Loader size="lg" />
       </div>
     );
   }
 
   const stats = data?.data;
 
-  // Prepare chart data
-  const chartData = stats?.dailyBreakdown?.map((day: any) => ({
-    day: day.dayName.slice(0, 3),
-    attempted: day.attempted,
-    correct: day.correct,
-  }));
+  if (!stats) {
+    return (
+      <div className="text-center py-12 px-4">
+        <p className="text-gray-500">No data available</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="card p-4 text-center">
-          <p className="text-2xl font-bold text-primary-600">{stats?.totalAttempted || 0}</p>
-          <p className="text-xs text-gray-500 mt-1">Total Attempted</p>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Weekly Summary Cards */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+            {stats.totalAttempted || 0}
+          </p>
+          <p className="text-xs text-gray-500 font-medium">Attempted</p>
         </div>
-        <div className="card p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{stats?.totalCorrect || 0}</p>
-          <p className="text-xs text-gray-500 mt-1">Correct</p>
+        <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-xl sm:text-2xl font-bold text-green-600 mb-1">
+            {stats.totalCorrect || 0}
+          </p>
+          <p className="text-xs text-gray-500 font-medium">Correct</p>
         </div>
-        <div className="card p-4 text-center">
-          <p className="text-2xl font-bold text-purple-600">{stats?.overallAccuracy || 0}%</p>
-          <p className="text-xs text-gray-500 mt-1">Accuracy</p>
+        <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-xl sm:text-2xl font-bold text-blue-600 mb-1">
+            {stats.overallAccuracy || 0}%
+          </p>
+          <p className="text-xs text-gray-500 font-medium">Accuracy</p>
         </div>
       </div>
 
-      {/* Weekly Chart */}
-      {chartData && chartData.length > 0 && (
-        <div className="card p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">This Week</h3>
+      {/* Daily Activity Chart */}
+      {stats.dailyActivity && stats.dailyActivity.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">
+            Daily Activity
+          </h3>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={chartData}>
+            <BarChart data={stats.dailyActivity}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
+              <XAxis
+                dataKey="day"
+                tick={{ fontSize: 12, fill: '#6b7280' }}
+                stroke="#e5e7eb"
+              />
+              <YAxis
+                tick={{ fontSize: 12, fill: '#6b7280' }}
+                stroke="#e5e7eb"
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
+                  fontSize: '12px',
                 }}
               />
-              <Bar dataKey="attempted" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="correct" fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="attempted" fill="#0095f6" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-          <div className="flex items-center justify-center gap-4 mt-4 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded"></div>
-              <span className="text-gray-600">Attempted</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded"></div>
-              <span className="text-gray-600">Correct</span>
-            </div>
-          </div>
         </div>
       )}
 
-      {/* Weakest Topics */}
-      {stats?.weakestTopics && stats.weakestTopics.length > 0 && (
-        <div className="card p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Topics to Focus On</h3>
+      {/* Top Topics */}
+      {stats.topTopics && stats.topTopics.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">
+            Top Topics
+          </h3>
           <div className="space-y-2">
-            {stats.weakestTopics.slice(0, 5).map((topic: any, index: number) => (
+            {stats.topTopics.slice(0, 5).map((topic: any, index: number) => (
               <div
-                key={topic.topic}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                key={index}
+                className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg font-bold text-gray-400">#{index + 1}</span>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{topic.topic}</p>
-                    <p className="text-xs text-gray-500">{topic.attempted} questions</p>
-                  </div>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0095f6] text-white text-xs font-bold flex items-center justify-center">
+                    {index + 1}
+                  </span>
+                  <span className="text-sm text-gray-900 font-medium truncate">
+                    {topic.topic}
+                  </span>
                 </div>
-                <span
-                  className={`text-sm font-semibold ${
-                    topic.accuracy < 50 ? 'text-red-600' : 'text-orange-600'
-                  }`}
-                >
-                  {topic.accuracy}%
+                <span className="text-xs text-gray-500 font-medium ml-2">
+                  {topic.attempted} questions
                 </span>
               </div>
             ))}
