@@ -35,6 +35,18 @@
 
 ---
 
+<img width="392" height="672" alt="explore page 1" src="https://github.com/user-attachments/assets/00527836-9400-43a7-8d42-134bfbe086d1" />
+<img width="412" height="668" alt="explore page 2" src="https://github.com/user-attachments/assets/c85e611b-bf3a-4567-9081-47ae29cd5b19" />
+<img width="418" height="677" alt="history page" src="https://github.com/user-attachments/assets/5d7c9395-bb65-40cc-82fa-fb6ccec26a83" />
+<img width="426" height="686" alt="home page" src="https://github.com/user-attachments/assets/f3c44e8c-aaa5-44dd-ab7f-e978e73e8494" />
+<img width="426" height="686" alt="home page" src="https://github.com/user-attachments/assets/ac18dbbd-1838-4fdf-b698-5564ae158369" />
+<img width="426" height="686" alt="home page" src="https://github.com/user-attachments/assets/d38815c8-9caf-48ca-b126-100bcfd1707a" />
+<img width="426" height="686" alt="home page" src="https://github.com/user-attachments/assets/f3236dd7-5e47-43fa-a8b8-a3c1a374b69b" />
+<img width="426" height="686" alt="home page" src="https://github.com/user-attachments/assets/85d3965d-e253-434d-8333-7577e19538a2" />
+
+
+
+
 ## 🎯 About The Project
 
 **prepX** is a mobile-first Progressive Web App (PWA) that revolutionizes government exam preparation by combining:
