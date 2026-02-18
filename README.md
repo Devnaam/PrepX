@@ -1,8 +1,7 @@
-# prepX - Social Learning Platform for Government Exam Aspirants
+# PrepX - Social Learning Platform for Government Exam Aspirants
 
 <div align="center">
 
-![prepX Logo](https://via.placeholder.com/150x150?text=prepX)
 
 **Scroll. Learn. Succeed.**
 
@@ -11,8 +10,6 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-
-[Live Demo](#) | [Documentation](#features) | [Report Bug](#issues) | [Request Feature](#issues)
 
 </div>
 
@@ -516,50 +513,6 @@ prepx/
 
 ---
 
-## 🗺️ Roadmap
-
-### ✅ Phase 1: MVP (Completed)
-
-- [x] Authentication system
-- [x] MCQ feed with infinite scroll
-- [x] Question filtering and answering
-- [x] Stats tracking and analytics
-- [x] User profiles and privacy
-- [x] Streak and badge system
-- [x] Admin panel with dashboard
-- [x] Bulk question upload
-
-### 🚧 Phase 2: Social Features (In Progress)
-
-- [ ] Home feed - community posts
-- [ ] Follow/Unfollow system
-- [ ] Friend requests
-- [ ] Comments and likes
-- [ ] Notifications
-- [ ] Explore page with suggestions
-- [ ] Trending hashtags
-
-### 📅 Phase 3: Advanced Features
-
-- [ ] GitHub-style activity graph
-- [ ] Enhanced analytics dashboard
-- [ ] PWA offline support
-- [ ] Push notifications
-- [ ] Email notifications
-- [ ] Dark mode
-- [ ] Multi-language support (Hindi)
-
-### 💰 Phase 4: Monetization & Scale
-
-- [ ] Premium features
-- [ ] Payment gateway integration
-- [ ] Ad integration
-- [ ] Native mobile apps (React Native)
-- [ ] Performance optimization
-- [ ] Scale to 100K+ users
-
----
-
 ## 🤝 Contributing
 
 Contributions are what make the open-source community amazing! Any contributions you make are **greatly appreciated**.
@@ -605,11 +558,11 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 **Developer:** Your Name
 
-- Email: your.email@example.com
-- LinkedIn: [your-linkedin](https://linkedin.com/in/your-profile)
-- GitHub: [@yourusername](https://github.com/yourusername)
+- Email: workwithdevnaam@gmail.com
+- LinkedIn: https://www.linkedin.com/in/raj-priyadershi-56a256282/
+- GitHub: github.com/devnaam
 
-**Project Link:** [https://github.com/yourusername/prepx](https://github.com/yourusername/prepx)
+**Project Link:** [https://github.com/devnaam/prepx](https://github.com/Devnaam/PrepX)
 
 ---
 
@@ -759,28 +712,3 @@ Thank you! ❤️
 
 ---
 
-## **Screenshots Section (Update README)**
-
-Add this section after Features:
-
-```markdown
-## 📸 Screenshots
-
-### Learn Tab - MCQ Feed
-
-![Learn Tab](https://via.placeholder.com/800x400?text=Learn+Tab+Screenshot)
-
-### Stats Dashboard
-
-![Stats](https://via.placeholder.com/800x400?text=Stats+Dashboard)
-
-### Admin Panel
-
-![Admin](https://via.placeholder.com/800x400?text=Admin+Panel)
-
-### Profile Page
-
-![Profile](https://via.placeholder.com/800x400?text=Profile+Page)
-```
-
----
